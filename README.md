@@ -44,19 +44,46 @@ make requirements
 source venv/bin/activate
 ```
 
-3. Set up the `PYTHONPATH`:
+3. Save the database and data warehouse credentials in AWS Secrets Manager:
+
+First create two files to store the secret data:
+```
+touch db_credentials.json
+touch dw_credentials.json
+```
+
+Add your credentials to the newly created files in the following format:
+
+```
+{ 
+    "host"     : "hostname",
+    "port"     : 0000,
+    "database" : "database name",
+    "user"     : "user name",
+    "password" : "password"
+}
+```
+
+Then, run the following command from the root directory to create the secrets in AWS:
+
+```
+make db-secret
+make dw-secret
+```
+
+4. Set up the `PYTHONPATH`:
 
 ```
 export PYTHONPATH=$(pwd)
 ```
 
-4. Run checks for unit-tests, pep8 compliancy, coverage and security vulnerabilities:
+5. Run checks for unit-tests, pep8 compliancy, coverage and security vulnerabilities:
 
 ```
 make run-checks
 ```
 
-5. Run Terraform to set up the AWS infrastructure:
+6. Run Terraform to set up the AWS infrastructure:
 
 ```
 cd terraform
