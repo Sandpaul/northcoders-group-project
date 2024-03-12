@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Setting up dw_crednetials in AWS Secrets Manager..."
+echo "Setting up dw_credentials in AWS Secrets Manager..."
 
 aws secretsmanager create-secret \
     --name dw_credentials \
