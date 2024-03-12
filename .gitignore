@@ -18,3 +18,5 @@ venv/
 .zip*
 package
 *.tfstate*
+db_credentials.json
+dw_credentials.json
