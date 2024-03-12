@@ -1,0 +1,29 @@
+{
+  "timestamp": "2022-11-03 14:20:51.563",
+  "address": [
+    {
+      "address_id": 1,
+      "address_line_1": "6826 Herzog Via",
+      "address_line_2": "",
+      "district": "Avon",
+      "city": "New Patienceburgh",
+      "postal_code": "28441",
+      "country": "Turkey ",
+      "phone": "1803 637401",
+      "created_at": "2022-11-03 14:20:49.962",
+      "last_updated": "2022-11-03 14:20:49.962"
+    },
+    {
+      "address_id": 2,
+      "address_line_1": "6102 Rogahn Skyway",
+      "address_line_2": "",
+      "district": "Bedfordshire",
+      "city": "Olsonside",
+      "postal_code": "47518",
+      "country": "Republic of Korea",
+      "phone": "9621 880720",
+      "created_at": "2022-11-03 14:20:49.962",
+      "last_updated": "2022-11-03 14:20:49.962"
+    }
+  ]
+}

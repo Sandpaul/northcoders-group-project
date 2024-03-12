@@ -1,0 +1,9 @@
+{
+    "timestamp": "2022-11-03 14:20:51.563",
+    "cars": [
+        {"id": 1, "make": "Ford", "model": "Mustang"},
+        {"id": 2, "make": "Toyota", "model": "Yaris"},
+        {"id": 3, "make": "Honda", "model": "Civic"},
+        {"id": 4, "make": "BMW", "model": "X5"}
+    ]
+}
