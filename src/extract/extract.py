@@ -3,6 +3,7 @@ get_timestamp(), update_timestamp(), connect_to_totesys(),
 retrieve_data_from_table() and retrieve_data_from_totesys()"""
 
 from datetime import datetime
+import json
 import logging
 import boto3
 import pg8000
@@ -55,19 +56,20 @@ def update_timestamp(parameter_name, value):
 
 
 def connect_to_totesys():
-    """Creates pg8000 connection to totesys database.
+    """Retrieves database credentials from AWS Secrets Manager and creates pg8000 connection to totesys database.
 
     Returns:
         class: Connection to the totesys database.
     """
 
-    conn = pg8000.connect(
-        host=
-        port=
-        database=
-        user=
-        password=
-    )
+    sm = boto3.client("secretsmanager")
+    
+    db_secret = sm.get_secret_value(SecretId="db_credentials")
+    db_credentials = db_secret["SecretString"]
+    db_dict = json.loads(db_credentials)
+    print(db_dict, type(db_dict))
+    
+    conn = pg8000.connect(**db_dict)
     logger.info("Connected to totesys")
     return conn
 
@@ -75,8 +77,8 @@ def connect_to_totesys():
 def retrieve_data_from_table(
     table_name,
     current_timestamp,
-    conn=connect_to_totesys(),
-    last_ingested_timestamp=get_timestamp("last_ingested_timestamp"),
+    conn,
+    last_ingested_timestamp,
 ):
     """Retrieves data from a specified table in the totesys database.
 
@@ -109,11 +111,13 @@ def retrieve_data_from_table(
             query = f"SELECT * FROM {table_name} WHERE last_updated > '{last_ingested_timestamp_value}';"  # noqa
 
         cursor = conn.cursor()
+        print(cursor, 'cursor')
         cursor.execute(query)
-
+        print(cursor.description, 'cursor.description')
         column_names = [i[0] for i in cursor.description]
+        print(column_names, 'column_names')
         rows = cursor.fetchall()
-
+        print(rows, 'rows')
         cursor.close()
 
         if len(rows) != 0:
@@ -126,6 +130,7 @@ def retrieve_data_from_table(
             return result
         else:
             return None
+
 
     except KeyError as ke_err:
         logger.error(f"KeyError Error occurred: {ke_err}")
@@ -140,58 +145,58 @@ def retrieve_data_from_table(
         raise RuntimeError(f"An unexpected error occurred: {e}") from e
 
 
-def retrieve_data_from_totesys(
-    current_timestamp=create_current_timestamp(),
-    last_ingested_timestamp=get_timestamp("last_ingested_timestamp"),
-):
-    """Retrieves all new data from all tables in totesys db
-    (i.e. data added since last_ingested_timestamp.)
+# def retrieve_data_from_totesys(
+#     current_timestamp=create_current_timestamp(),
+#     last_ingested_timestamp=get_timestamp("last_ingested_timestamp"),
+# ):
+#     """Retrieves all new data from all tables in totesys db
+#     (i.e. data added since last_ingested_timestamp.)
 
-    Args:
-        current_timestamp (str, optional): The current timestamp where
-        data is to be saved. Defaults to create_current_timestamp().
-        last_ingested_timestamp (str, optional): The timestamp of when data was
-        last ingested from totesys db.
-        Defaults to get_timestamp("last_ingested_timestamp").
+#     Args:
+#         current_timestamp (str, optional): The current timestamp where
+#         data is to be saved. Defaults to create_current_timestamp().
+#         last_ingested_timestamp (str, optional): The timestamp of when data was
+#         last ingested from totesys db.
+#         Defaults to get_timestamp("last_ingested_timestamp").
 
-    Returns:
-        data_update (list of dicts): list of dicts representing
-        data extracted from totesys db.
-    """
+#     Returns:
+#         data_update (list of dicts): list of dicts representing
+#         data extracted from totesys db.
+#     """
 
-    table_names = [
-        "counterparty",
-        "currency",
-        "address",
-        "department",
-        "design",
-        "staff",
-        "sales_order",
-        "payment",
-        "payment_type",
-        "purchase_order",
-        "transaction",
-    ]
-    try:
-        data_update = [
-            retrieve_data_from_table(
-                table, current_timestamp,
-                last_ingested_timestamp=last_ingested_timestamp
-            )
-            for table in table_names
-            if retrieve_data_from_table(
-                table, current_timestamp,
-                last_ingested_timestamp=last_ingested_timestamp
-            )
-        ]
+#     table_names = [
+#         "counterparty",
+#         "currency",
+#         "address",
+#         "department",
+#         "design",
+#         "staff",
+#         "sales_order",
+#         "payment",
+#         "payment_type",
+#         "purchase_order",
+#         "transaction",
+#     ]
+#     try:
+#         data_update = [
+#             retrieve_data_from_table(
+#                 table, current_timestamp,
+#                 last_ingested_timestamp=last_ingested_timestamp
+#             )
+#             for table in table_names
+#             if retrieve_data_from_table(
+#                 table, current_timestamp,
+#                 last_ingested_timestamp=last_ingested_timestamp
+#             )
+#         ]
 
-        logger.info(f"Data extracted from totesys: {data_update}")
-        return data_update
+#         logger.info(f"Data extracted from totesys: {data_update}")
+#         return data_update
 
-    except ValueError as v:
-        logger.error(f"ValueError occured: {v}")
-        raise RuntimeError(f"ValueError occurred: {v}") from v
+#     except ValueError as v:
+#         logger.error(f"ValueError occured: {v}")
+#         raise RuntimeError(f"ValueError occurred: {v}") from v
 
-    except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
-        raise RuntimeError(f"An unexpected error occurred: {e}") from e
+#     except Exception as e:
+#         logger.error(f"An unexpected error occurred: {e}")
+#         raise RuntimeError(f"An unexpected error occurred: {e}") from e
