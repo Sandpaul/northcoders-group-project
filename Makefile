@@ -59,6 +59,13 @@ coverage:
 ## Set up dev requirements (bandit, safety, flake8)
 dev-setup: bandit safety flake coverage
 
+## Add db and dw credentials to AWS Secrets Manager
+db-secret:
+	$(call execute_in_env, ./setup/setup_db_credentials.sh)
+
+dw-secret:
+	$(call execute_in_env, ./setup/setup_dw_credentials.sh)
+
 # Build / Run
 
 ## Run the security test (bandit + safety)
