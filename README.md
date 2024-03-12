@@ -5,7 +5,7 @@
 <p align="center">
  <a href="https://github.com/Sandpaul">Paul Sandford</a> | <a href="https://github.com/ldearlove">Liam Dearlove</a> | <a href="https://github.com/innateterina">Inna Teterina</a> | <a href="https://github.com/muhammad7877">Muhammad Raza</a> | <a href="https://github.com/Irfan6672">Muhammed Irfan</a> | <a href="https://github.com/KiraHeichou">Rahul Aneesh</a>
  </p>
- <p align="center"><img style="margin: auto;" src="image.png" width="200">
+ <p align="center"><img style="margin: auto;" src="team-logo.png" width="200">
  </p>
 
  ## Overview
