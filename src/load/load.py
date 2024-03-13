@@ -69,8 +69,6 @@ def load_dataframe_to_database(file_path):
     dw_secret = sm.get_secret_value(SecretId="dw_credentials")
     dw_credentials = dw_secret["SecretString"]
     dw_dict = json.loads(dw_credentials)
-    print(dw_dict['host'])
-    
 
     engine = create_engine(f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}')  # noqa
 
