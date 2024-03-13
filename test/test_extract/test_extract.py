@@ -4,7 +4,7 @@ retrieve_data_from_table() and retrieve_data_from_totesys()"""
 
 import os
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 import datetime
 import unittest
 import pytest
@@ -12,7 +12,7 @@ import pg8000
 import boto3
 from moto import mock_aws
 from src.extract.extract import (
-    # retrieve_data_from_totesys,
+    retrieve_data_from_totesys,
     connect_to_totesys,
     create_current_timestamp,
     get_timestamp,
@@ -237,69 +237,97 @@ def test_nothing_is_returned_when_rows_length_is_0(sm, mock_db_credentials):
             )
         assert result is None
 
-# @pytest.mark.skip
-# @pytest.mark.describe("retrieve_data_from_totesys()")
-# @pytest.mark.it("should return dict for each table")
-# def test_retrieve_from_totesys_returns_dict_for_each_table():
-#     """retrieve_data_from_totesys should return a list with one dictionary per
-#     totesys table that data has been retrieved from"""
-#     last_ingested_timestamp = {"Parameter":
-#                                {"Value": "2020-02-19 10:47:13.137440"}}
-#     result = retrieve_data_from_totesys(
-#         last_ingested_timestamp=last_ingested_timestamp)
-#     assert len(result) == 11
 
-# @pytest.mark.skip
-# @pytest.mark.describe("retrieve_data_from_totesys()")
-# @pytest.mark.it("should return same timestamp for each dict")
-# def test_retrieve_from_totesys_has_correct_timestamp_on_each_dict():
-#     """retrieve_data_from_totesys should return
-#     a list of dicts, each one should have the same timestamp"""
-#     last_ingested_timestamp = {"Parameter":
-#                                {"Value": "2020-02-19 10:47:13.137440"}}
-#     result = retrieve_data_from_totesys(
-#         last_ingested_timestamp=last_ingested_timestamp)
-#     timestamp = result[0]["timestamp"]
-#     for i in result:
-#         assert i["timestamp"] == timestamp
+@pytest.mark.describe("retrieve_data_from_totesys()")
+@pytest.mark.it("should call retrieve_data_from_table() correctly")
+def test_retrieve_from_totesys_calls_retrieve_from_table(ssm, parameter, sm, mock_db_credentials):
+    """retrieve_data_from_totesys should call retrieve_data_from_table() correctly for each table name."""
+    test_li_timestamp = "2200-01-01"
+    test_current_timestamp = "test_current_timestamp"
+    with mock.patch("src.extract.extract.retrieve_data_from_table") as mock_retrieve_data_from_table:
+        with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
+            result = retrieve_data_from_totesys(
+                last_ingested_timestamp=test_li_timestamp,
+                current_timestamp = test_current_timestamp,
+                conn=mock_conn,
+            )
+            calls = [
+                call("counterparty", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("currency", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("address", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("department", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("design", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("staff", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("sales_order", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("payment", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("payment_type", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("purchase_order", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
+                call("transaction", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01")
+            ]
+            mock_retrieve_data_from_table.assert_has_calls(calls)
 
-# @pytest.mark.skip
-# @pytest.mark.describe("retrieve_data_from_table()")
-# @pytest.mark.it("should return a Programming Error")
-# def test_programming_error_table():
-#     mock_cursor = MagicMock()
-#     mock_cursor.execute.side_effect = pg8000.ProgrammingError
-#     mock_conn = MagicMock()
-#     mock_conn.cursor.return_value = mock_cursor
-#     with pytest.raises(pg8000.ProgrammingError):
-#         retrieve_data_from_table("your_table_name",
-#                                  "current_timestamp",
-#                                  conn=mock_conn)
 
-# @pytest.mark.skip
-# @pytest.mark.describe("retrieve_data_from_table()")
-# @pytest.mark.it("should return a Unexpected Error")
-# def test_unexpected_error_table():
-#     mock_cursor = MagicMock()
-#     mock_cursor.execute.side_effect = Exception
-#     mock_conn = MagicMock()
-#     mock_conn.cursor.return_value = mock_cursor
-#     with pytest.raises(RuntimeError):
-#         retrieve_data_from_table("your_table_name",
-#                                  "current_timestamp",
-#                                  conn=mock_conn)
+@pytest.mark.describe("retrieve_data_from_totesys()")
+@pytest.mark.it("should return same timestamp for each dict")
+def test_retrieve_from_totesys_has_correct_timestamp_on_each_dict(sm, mock_db_credentials, ssm, parameter):
+    """retrieve_data_from_totesys should return
+    a list of dicts, each one should have the same timestamp"""
+    test_current_timestamp = "test_timestamp"
+    with mock.patch("src.extract.extract.retrieve_data_from_table", return_value = {"timestamp": test_current_timestamp}):
+        with mock.patch("src.extract.extract.pg8000.connect"):
+            result = retrieve_data_from_totesys(
+            current_timestamp=test_current_timestamp)
+            for i in result:
+                assert i["timestamp"] == "test_timestamp"
 
-# @pytest.mark.skip
-# @pytest.mark.describe("retrieve_data_from_table()")
-# @pytest.mark.it("should return a Key Error")
-# def test_value_error_table():
-#     with pytest.raises(KeyError) as exception_info:
-#         retrieve_data_from_table("your_table_name",
-#                                  "current_timestamp",
-#                                  last_ingested_timestamp={})
-#     assert "KeyError" in str(exception_info.value)
 
-# @pytest.mark.skip
+@pytest.mark.describe("retrieve_data_from_table()")
+@pytest.mark.it("should return a Programming Error")
+def test_programming_error_table():
+    mock_cursor = MagicMock()
+    mock_cursor.execute.side_effect = pg8000.ProgrammingError
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    last_ingested_timestamp = {"Parameter":
+                                {"Value": "2020-02-19 10:47:13.137440"}}
+    with pytest.raises(pg8000.ProgrammingError):
+        retrieve_data_from_table(
+            table_name="table_name",
+            current_timestamp="current_timestamp",
+            last_ingested_timestamp=last_ingested_timestamp,
+            conn=mock_conn
+        )
+
+
+@pytest.mark.describe("retrieve_data_from_table()")
+@pytest.mark.it("should return a Unexpected Error")
+def test_unexpected_error_table():
+    mock_cursor = MagicMock()
+    mock_cursor.execute.side_effect = Exception
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    last_ingested_timestamp = {"Parameter":
+                                {"Value": "2020-02-19 10:47:13.137440"}}
+    with pytest.raises(RuntimeError):
+        retrieve_data_from_table(
+            table_name="table_name",
+            current_timestamp="current_timestamp",
+            last_ingested_timestamp=last_ingested_timestamp,
+            conn=mock_conn,
+        )
+
+
+@pytest.mark.describe("retrieve_data_from_table()")
+@pytest.mark.it("should return a Key Error")
+def test_value_error_table():
+    with pytest.raises(KeyError) as exception_info:
+        retrieve_data_from_table("your_table_name",
+                                 "current_timestamp",
+                                 last_ingested_timestamp={},
+                                 conn=1)
+    assert "KeyError" in str(exception_info.value)
+
+
 # class TestRetrieveDataFromTotesys(unittest.TestCase):
 #     @patch('src.extract.extract.retrieve_data_from_table')
 #     def test_value_error(self, mock_retrieve_data_from_table):
@@ -309,10 +337,10 @@ def test_nothing_is_returned_when_rows_length_is_0(sm, mock_db_credentials):
 #                                     "ValueError occurred: Mocked ValueError"):
 #             retrieve_data_from_totesys()
 
-# @pytest.mark.skip
+
 # @pytest.mark.describe("retrieve_data_from_totesys()")
 # @pytest.mark.it("should return a unexpected Error")
-# def test_unexpected_error_totesys():
+# def test_unexpected_error_totesys(sm, mock_db_credentials):
 #     with mock.patch('src.extract.extract.retrieve_data_from_table',
 #                     side_effect=Exception("Mocked exception")):
 #         with unittest.TestCase.assertRaises(None, RuntimeError) \

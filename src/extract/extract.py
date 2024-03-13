@@ -111,13 +111,11 @@ def retrieve_data_from_table(
             query = f"SELECT * FROM {table_name} WHERE last_updated > '{last_ingested_timestamp_value}';"  # noqa
 
         cursor = conn.cursor()
-        print(cursor, 'cursor')
         cursor.execute(query)
-        print(cursor.description, 'cursor.description')
+
         column_names = [i[0] for i in cursor.description]
-        print(column_names, 'column_names')
         rows = cursor.fetchall()
-        print(rows, 'rows')
+
         cursor.close()
 
         if len(rows) != 0:
@@ -145,58 +143,68 @@ def retrieve_data_from_table(
         raise RuntimeError(f"An unexpected error occurred: {e}") from e
 
 
-# def retrieve_data_from_totesys(
-#     current_timestamp=create_current_timestamp(),
-#     last_ingested_timestamp=get_timestamp("last_ingested_timestamp"),
-# ):
-#     """Retrieves all new data from all tables in totesys db
-#     (i.e. data added since last_ingested_timestamp.)
+def retrieve_data_from_totesys(
+    **kwargs,
+):
+    """Retrieves all new data from all tables in totesys db
+    (i.e. data added since last_ingested_timestamp.)
 
-#     Args:
-#         current_timestamp (str, optional): The current timestamp where
-#         data is to be saved. Defaults to create_current_timestamp().
-#         last_ingested_timestamp (str, optional): The timestamp of when data was
-#         last ingested from totesys db.
-#         Defaults to get_timestamp("last_ingested_timestamp").
+    Args:
+        current_timestamp (str, optional): The current timestamp where
+        data is to be saved. Defaults to create_current_timestamp().
+        last_ingested_timestamp (str, optional): The timestamp of when data was
+        last ingested from totesys db.
+        Defaults to get_timestamp("last_ingested_timestamp").
 
-#     Returns:
-#         data_update (list of dicts): list of dicts representing
-#         data extracted from totesys db.
-#     """
+    Returns:
+        data_update (list of dicts): list of dicts representing
+        data extracted from totesys db.
+    """
+    
+    if kwargs.get("conn", None) is None:
+        conn = connect_to_totesys()
+    else:
+        conn = kwargs["conn"]
 
-#     table_names = [
-#         "counterparty",
-#         "currency",
-#         "address",
-#         "department",
-#         "design",
-#         "staff",
-#         "sales_order",
-#         "payment",
-#         "payment_type",
-#         "purchase_order",
-#         "transaction",
-#     ]
-#     try:
-#         data_update = [
-#             retrieve_data_from_table(
-#                 table, current_timestamp,
-#                 last_ingested_timestamp=last_ingested_timestamp
-#             )
-#             for table in table_names
-#             if retrieve_data_from_table(
-#                 table, current_timestamp,
-#                 last_ingested_timestamp=last_ingested_timestamp
-#             )
-#         ]
+    if kwargs.get("last_ingested_timestamp", None) is None:
+        last_ingested_timestamp = get_timestamp("last_ingested_timestamp")
+    else:
+        last_ingested_timestamp = kwargs["last_ingested_timestamp"]
+    
+    if kwargs.get("current_timestamp", None) is None:
+        current_timestamp = create_current_timestamp()
+    else:
+        current_timestamp = kwargs["current_timestamp"]
 
-#         logger.info(f"Data extracted from totesys: {data_update}")
-#         return data_update
+    table_names = [
+        "counterparty",
+        "currency",
+        "address",
+        "department",
+        "design",
+        "staff",
+        "sales_order",
+        "payment",
+        "payment_type",
+        "purchase_order",
+        "transaction",
+    ]
+    try:
+        data_update = [
+            retrieve_data_from_table(
+                table, current_timestamp, conn,
+                last_ingested_timestamp=last_ingested_timestamp
+            )
+            for table in table_names
+        ]
 
-#     except ValueError as v:
-#         logger.error(f"ValueError occured: {v}")
-#         raise RuntimeError(f"ValueError occurred: {v}") from v
+        logger.info(f"Data extracted from totesys: {data_update}")
+        return data_update
 
-#     except Exception as e:
-#         logger.error(f"An unexpected error occurred: {e}")
-#         raise RuntimeError(f"An unexpected error occurred: {e}") from e
+    except ValueError as v:
+        logger.error(f"ValueError occured: {v}")
+        raise RuntimeError(f"ValueError occurred: {v}") from v
+
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        raise RuntimeError(f"An unexpected error occurred: {e}") from e
