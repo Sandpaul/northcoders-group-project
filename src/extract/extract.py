@@ -68,7 +68,6 @@ def connect_to_totesys():
     db_secret = sm.get_secret_value(SecretId="db_credentials")
     db_credentials = db_secret["SecretString"]
     db_dict = json.loads(db_credentials)
-    print(db_dict, type(db_dict))
     
     conn = pg8000.connect(**db_dict)
     logger.info("Connected to totesys")
