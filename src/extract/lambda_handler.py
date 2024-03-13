@@ -10,7 +10,7 @@ from src.extract.extract import (
     get_timestamp,
 )
 from src.extract.sql_to_list_of_dicts import sql_to_list_of_dicts
-from src.extract.json_file_maker import json_file_maker
+from src.extract.parquet_file_maker import parquet_file_maker
 
 logger = logging.getLogger("MyLogger")
 logger.setLevel(logging.INFO)
@@ -42,7 +42,7 @@ def lambda_handler(event, context):
         for x in data:
             formatted_data = sql_to_list_of_dicts(x)
             logger.info(f"Table Data: {x}")
-            json_file_maker(formatted_data)
+            parquet_file_maker(formatted_data)
             logger.info("Table data converted to JSON")
 
         update_timestamp("last_ingested_timestamp", current_timestamp)
