@@ -35,7 +35,8 @@ def get_timestamp(parameter_name):
     """
     ssm_client = boto3.client("ssm", region_name="eu-west-2")
 
-    timestamp = ssm_client.get_parameter(Name=parameter_name)
+    parameter = ssm_client.get_parameter(Name=parameter_name)
+    timestamp = parameter["Parameter"]["Value"]
     logger.info(f"Timestamp retrieved - {parameter_name}: {timestamp}")
     return timestamp
 
@@ -102,13 +103,11 @@ def retrieve_data_from_table(
             "table_rows": rows,
         } """
     try:
-        last_ingested_timestamp_value = \
-         last_ingested_timestamp["Parameter"]["Value"]
 
-        if last_ingested_timestamp_value == "None":
+        if last_ingested_timestamp == "None":
             query = f"SELECT * FROM {table_name};"
         else:
-            query = f"SELECT * FROM {table_name} WHERE last_updated > '{last_ingested_timestamp_value}';"  # noqa
+            query = f"SELECT * FROM {table_name} WHERE last_updated > '{last_ingested_timestamp}';"  # noqa
 
         cursor = conn.cursor()
         cursor.execute(query)

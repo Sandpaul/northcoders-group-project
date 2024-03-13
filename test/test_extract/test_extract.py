@@ -78,7 +78,7 @@ def test_get_timestamp_retrieves_paramater_from_aws_systems_manager(parameter):
     """get_timestamp() should successfully retrieve
     a parameter from AWS systems manager"""
     result = get_timestamp("last_ingested_timestamp")
-    assert result["Parameter"]["Value"] == "1970-01-01 00:00:00.000000"
+    assert result == "1970-01-01 00:00:00.000000"
 
 
 @pytest.mark.describe("update_timestamp()")
@@ -88,12 +88,10 @@ def tests_retrieve_from_totesys_updates_last_ingested_timestamp_param(ssm):
     """
     update_timestamp("demo_put_timestamp", "hello")
     expected = "hello"
-    assert get_timestamp("demo_put_timestamp")["Parameter"]["Value"]\
-        == expected
+    assert get_timestamp("demo_put_timestamp") == expected
     update_timestamp("demo_put_timestamp", "goodbye")
     expected = "goodbye"
-    assert get_timestamp("demo_put_timestamp")["Parameter"]["Value"]\
-        == expected
+    assert get_timestamp("demo_put_timestamp") == expected
 
 
 @pytest.mark.describe("connect_to_totesys()")
@@ -123,8 +121,7 @@ def test_correct_timestamp_returned_in_result(sm, mock_db_credentials):
         mock_conn.cursor.return_value = mock_cursor
         current_timestamp = "2024-02-15 15:19:53.816597"
         table_name = "sales_order"
-        last_ingested_timestamp = {"Parameter":
-                                {"Value": "2020-02-19 10:47:13.137440"}}
+        last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         result = retrieve_data_from_table(
             table_name=table_name,
             current_timestamp=current_timestamp,
@@ -145,8 +142,7 @@ def test_correct_tablename_returned_in_result(sm, mock_db_credentials):
         mock_conn.cursor.return_value = mock_cursor
         current_timestamp = "2024-02-15 15:19:53.816597"
         table_name = "sales_order"
-        last_ingested_timestamp = {"Parameter":
-                                {"Value": "2020-02-19 10:47:13.137440"}}
+        last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         result = retrieve_data_from_table(
             table_name=table_name,
             current_timestamp=current_timestamp,
@@ -168,8 +164,7 @@ def test_correct_columns_returned_in_result(sm, mock_db_credentials):
         mock_conn.cursor.return_value = mock_cursor
         current_timestamp = "2024-02-15 15:19:53.816597"
         table_name = "currency"
-        last_ingested_timestamp = {"Parameter":
-                                {"Value": "2020-02-19 10:47:13.137440"}}
+        last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         expected = ["currency_id", "currency_code", "created_at", "last_updated"]
         result = retrieve_data_from_table(
             table_name=table_name,
@@ -186,8 +181,7 @@ def test_correct_rows_returned_by_retrieve_data_from_table(sm, mock_db_credentia
     """retrieve_data_from_table() should return correct rows
     """
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
-        last_ingested_timestamp = {"Parameter":
-                               {"Value": "2020-02-19 10:47:13.137440"}}
+        last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         expected_rows = (
             [
                 1,
@@ -227,8 +221,7 @@ def test_nothing_is_returned_when_rows_length_is_0(sm, mock_db_credentials):
     """retrieve_data_from_tables() should return nothing when rows length is 0.
     """
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
-        last_ingested_timestamp = {"Parameter":
-                                {"Value": "2020-02-19 10:47:13.137440"}}
+        last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         result = retrieve_data_from_table(
                 table_name="currency",
                 current_timestamp="2024-02-16 10:30:53.816597",
@@ -288,8 +281,7 @@ def test_programming_error_table():
     mock_cursor.execute.side_effect = pg8000.ProgrammingError
     mock_conn = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
-    last_ingested_timestamp = {"Parameter":
-                                {"Value": "2020-02-19 10:47:13.137440"}}
+    last_ingested_timestamp = "2020-02-19 10:47:13.137440"
     with pytest.raises(pg8000.ProgrammingError):
         retrieve_data_from_table(
             table_name="table_name",
@@ -306,8 +298,7 @@ def test_unexpected_error_table():
     mock_cursor.execute.side_effect = Exception
     mock_conn = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
-    last_ingested_timestamp = {"Parameter":
-                                {"Value": "2020-02-19 10:47:13.137440"}}
+    last_ingested_timestamp = "2020-02-19 10:47:13.137440"
     with pytest.raises(RuntimeError):
         retrieve_data_from_table(
             table_name="table_name",
@@ -317,15 +308,16 @@ def test_unexpected_error_table():
         )
 
 
-@pytest.mark.describe("retrieve_data_from_table()")
-@pytest.mark.it("should return a Key Error")
-def test_value_error_table():
-    with pytest.raises(KeyError) as exception_info:
-        retrieve_data_from_table("your_table_name",
-                                 "current_timestamp",
-                                 last_ingested_timestamp={},
-                                 conn=1)
-    assert "KeyError" in str(exception_info.value)
+# @pytest.mark.describe("retrieve_data_from_table()")
+# @pytest.mark.it("should return a Key Error")
+# def test_value_error_table():
+#     with mock.patch("src.extract.extract.pg8000.connect", side_effect = KeyError) as mock_conn:
+#         with pytest.raises(KeyError) as exception_info:
+#             retrieve_data_from_table("your_table_name",
+#                                     "current_timestamp",
+#                                     last_ingested_timestamp={},
+#                                     conn=mock_conn)
+#     assert "KeyError" in str(exception_info.value)
 
 
 # class TestRetrieveDataFromTotesys(unittest.TestCase):
