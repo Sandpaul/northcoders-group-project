@@ -32,11 +32,11 @@ def s3(aws_credentials):
 def example_data():
     """Create mock data."""
     mock_data = [
-            {"id": 1, "make": "Ford", "model": "Mustang"},
-            {"id": 2, "make": "Toyota", "model": "Yaris"},
-            {"id": 3, "make": "Honda", "model": "Civic"},
-            {"id": 4, "make": "BMW", "model": "X5"},
-        ]
+        {"id": 1, "make": "Ford", "model": "Mustang"},
+        {"id": 2, "make": "Toyota", "model": "Yaris"},
+        {"id": 3, "make": "Honda", "model": "Civic"},
+        {"id": 4, "make": "BMW", "model": "X5"},
+    ]
     return pd.DataFrame.from_records(mock_data)
 
 
@@ -53,7 +53,7 @@ def bucket(s3, example_data):
         Bucket="totesys-etl-ingestion-bucket-teamness-120224",
         Key="cars/2022-11-03/14:20:51.563/.parquet",
     )
-    
+
 
 @pytest.mark.describe("parquet_file_reader()")
 @pytest.mark.it("should retrieve data frame from file")
@@ -63,3 +63,4 @@ def test_retrieve_df_from_file(s3, example_data, bucket):
     bucket_name = "totesys-etl-ingestion-bucket-teamness-120224"
     result = parquet_file_reader(file_path, bucket_name)
     assert type(result).__name__ == "DataFrame"
+    assert result.equals(example_data)
