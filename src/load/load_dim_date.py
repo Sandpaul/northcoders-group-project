@@ -7,8 +7,7 @@ from src.transform.create_dim_date import create_dim_date
 
 
 def load_dim_date():
-    """Function to populate dim_date table in data warehouse
-    """
+    """Function to populate dim_date table in data warehouse"""
     dim_date_df = create_dim_date("2010-01-01", "2050-12-31")
 
     sm = boto3.client("secretsmanager")
@@ -17,7 +16,9 @@ def load_dim_date():
     dw_credentials = dw_secret["SecretString"]
     dw_dict = json.loads(dw_credentials)
 
-    engine = create_engine(f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}')  # noqa
+    engine = create_engine(
+        f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}'
+    )  # noqa
 
     with engine.connect() as connection:
 
@@ -26,10 +27,8 @@ def load_dim_date():
         try:
 
             dim_date_df.to_sql(
-            name="dim_date",
-            con=engine,
-            index=False,
-            if_exists="append")
+                name="dim_date", con=engine, index=False, if_exists="append"
+            )
 
             connection.commit()
 

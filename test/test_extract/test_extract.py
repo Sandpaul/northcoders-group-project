@@ -31,11 +31,11 @@ def aws_credentials():
     os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def ssm(aws_credentials):
     """Create mock ssm client."""
     with mock_aws():
-        yield boto3.client("ssm", region_name='eu-west-2')
+        yield boto3.client("ssm", region_name="eu-west-2")
 
 
 @pytest.fixture
@@ -44,8 +44,9 @@ def parameter(ssm):
     return ssm.put_parameter(
         Name="last_ingested_timestamp",
         Type="String",
-        Value="1970-01-01 00:00:00.000000"
+        Value="1970-01-01 00:00:00.000000",
     )
+
 
 @pytest.fixture(scope="function")
 def sm(aws_credentials):
@@ -59,15 +60,14 @@ def mock_db_credentials(sm):
     """Create mock db credentials."""
     return sm.create_secret(
         Name="db_credentials",
-        SecretString='{"host" : "test_host","port" : "test_port","database" : "test_database","user" : "test_user","password" : "test_password"}'
+        SecretString='{"host" : "test_host","port" : "test_port","database" : "test_database","user" : "test_user","password" : "test_password"}',
     )
-    
+
 
 @pytest.mark.describe("create_current_timestamp()")
 @pytest.mark.it("create_current_timestamp() should return a string")
 def test_create_current_timestamp():
-    """create_current_timestamp() should return a string
-    """    
+    """create_current_timestamp() should return a string"""
     result = create_current_timestamp()
     assert isinstance(result, str)
 
@@ -84,8 +84,7 @@ def test_get_timestamp_retrieves_paramater_from_aws_systems_manager(parameter):
 @pytest.mark.describe("update_timestamp()")
 @pytest.mark.it("should update successfully update param in AWS ssm")
 def tests_retrieve_from_totesys_updates_last_ingested_timestamp_param(ssm):
-    """update_timestamp() should successfully update param in AWS ssm
-    """
+    """update_timestamp() should successfully update param in AWS ssm"""
     update_timestamp("demo_put_timestamp", "hello")
     expected = "hello"
     assert get_timestamp("demo_put_timestamp") == expected
@@ -97,8 +96,7 @@ def tests_retrieve_from_totesys_updates_last_ingested_timestamp_param(ssm):
 @pytest.mark.describe("connect_to_totesys()")
 @pytest.mark.it("should sucessfully connect to totesys db")
 def test_connection_to_totesys(sm, mock_db_credentials):
-    """connect_to_totesys() should successfully connect to totesys db.
-    """
+    """connect_to_totesys() should successfully connect to totesys db."""
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
         connect_to_totesys()
         mock_conn.assert_called_once_with(
@@ -106,15 +104,14 @@ def test_connection_to_totesys(sm, mock_db_credentials):
             port="test_port",
             database="test_database",
             user="test_user",
-            password="test_password"
+            password="test_password",
         )
 
 
 @pytest.mark.describe("retrieve_data_from_table()")
 @pytest.mark.it("should return correct timestamp")
 def test_correct_timestamp_returned_in_result(sm, mock_db_credentials):
-    """retrieve_data_from_table() should return the correct current timestamp.
-    """
+    """retrieve_data_from_table() should return the correct current timestamp."""
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
         mock_cursor = MagicMock(name="mock_cursor")
         mock_cursor.fetchall.return_value = [1, 2, 3]
@@ -126,7 +123,7 @@ def test_correct_timestamp_returned_in_result(sm, mock_db_credentials):
             table_name=table_name,
             current_timestamp=current_timestamp,
             conn=mock_conn,
-            last_ingested_timestamp=last_ingested_timestamp
+            last_ingested_timestamp=last_ingested_timestamp,
         )
         assert result["timestamp"] == current_timestamp
 
@@ -134,8 +131,7 @@ def test_correct_timestamp_returned_in_result(sm, mock_db_credentials):
 @pytest.mark.describe("retrieve_data_from_table()")
 @pytest.mark.it("should return correct tablename")
 def test_correct_tablename_returned_in_result(sm, mock_db_credentials):
-    """retrieve_data_from_table() should return correct table name.
-    """
+    """retrieve_data_from_table() should return correct table name."""
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
         mock_cursor = MagicMock(name="mock_cursor")
         mock_cursor.fetchall.return_value = [1, 2, 3]
@@ -147,7 +143,7 @@ def test_correct_tablename_returned_in_result(sm, mock_db_credentials):
             table_name=table_name,
             current_timestamp=current_timestamp,
             conn=mock_conn,
-            last_ingested_timestamp=last_ingested_timestamp
+            last_ingested_timestamp=last_ingested_timestamp,
         )
         assert result["table_name"] == table_name
 
@@ -155,12 +151,16 @@ def test_correct_tablename_returned_in_result(sm, mock_db_credentials):
 @pytest.mark.describe("retrieve_data_from_table()")
 @pytest.mark.it("should return correct columns")
 def test_correct_columns_returned_in_result(sm, mock_db_credentials):
-    """retrieve_data_from_table() should return correct columns.
-    """
+    """retrieve_data_from_table() should return correct columns."""
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
         mock_cursor = MagicMock(name="mock_cursor")
         mock_cursor.fetchall.return_value = [1, 2, 3]
-        mock_cursor.description = [["currency_id"], ["currency_code"], ["created_at"], ["last_updated"]]
+        mock_cursor.description = [
+            ["currency_id"],
+            ["currency_code"],
+            ["created_at"],
+            ["last_updated"],
+        ]
         mock_conn.cursor.return_value = mock_cursor
         current_timestamp = "2024-02-15 15:19:53.816597"
         table_name = "currency"
@@ -170,16 +170,15 @@ def test_correct_columns_returned_in_result(sm, mock_db_credentials):
             table_name=table_name,
             current_timestamp=current_timestamp,
             conn=mock_conn,
-            last_ingested_timestamp=last_ingested_timestamp
+            last_ingested_timestamp=last_ingested_timestamp,
         )
         assert result["table_columns"] == expected
 
 
-@pytest.mark.describe('retrieve_data_from_table()')
-@pytest.mark.it('should return correct rows')
+@pytest.mark.describe("retrieve_data_from_table()")
+@pytest.mark.it("should return correct rows")
 def test_correct_rows_returned_by_retrieve_data_from_table(sm, mock_db_credentials):
-    """retrieve_data_from_table() should return correct rows
-    """
+    """retrieve_data_from_table() should return correct rows"""
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
         last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         expected_rows = (
@@ -204,13 +203,18 @@ def test_correct_rows_returned_by_retrieve_data_from_table(sm, mock_db_credentia
         )
         mock_cursor = MagicMock(name="mock_cursor")
         mock_cursor.fetchall.return_value = expected_rows
-        mock_cursor.description = [["currency_id"], ["currency_code"], ["created_at"], ["last_updated"]]
+        mock_cursor.description = [
+            ["currency_id"],
+            ["currency_code"],
+            ["created_at"],
+            ["last_updated"],
+        ]
         mock_conn.cursor.return_value = mock_cursor
         result = retrieve_data_from_table(
             table_name="currency",
             current_timestamp="2024-02-16 10:30:53.816597",
             last_ingested_timestamp=last_ingested_timestamp,
-            conn=mock_conn
+            conn=mock_conn,
         )
         assert result["table_rows"] == expected_rows
 
@@ -218,58 +222,122 @@ def test_correct_rows_returned_by_retrieve_data_from_table(sm, mock_db_credentia
 @pytest.mark.describe("retrieve_data_from_table()")
 @pytest.mark.it("should return None when row length is 0")
 def test_nothing_is_returned_when_rows_length_is_0(sm, mock_db_credentials):
-    """retrieve_data_from_tables() should return nothing when rows length is 0.
-    """
+    """retrieve_data_from_tables() should return nothing when rows length is 0."""
     with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
         last_ingested_timestamp = "2020-02-19 10:47:13.137440"
         result = retrieve_data_from_table(
-                table_name="currency",
-                current_timestamp="2024-02-16 10:30:53.816597",
-                last_ingested_timestamp=last_ingested_timestamp,
-                conn=mock_conn
-            )
+            table_name="currency",
+            current_timestamp="2024-02-16 10:30:53.816597",
+            last_ingested_timestamp=last_ingested_timestamp,
+            conn=mock_conn,
+        )
         assert result is None
 
 
 @pytest.mark.describe("retrieve_data_from_totesys()")
 @pytest.mark.it("should call retrieve_data_from_table() correctly")
-def test_retrieve_from_totesys_calls_retrieve_from_table(ssm, parameter, sm, mock_db_credentials):
+def test_retrieve_from_totesys_calls_retrieve_from_table(
+    ssm, parameter, sm, mock_db_credentials
+):
     """retrieve_data_from_totesys should call retrieve_data_from_table() correctly for each table name."""
     test_li_timestamp = "2200-01-01"
     test_current_timestamp = "test_current_timestamp"
-    with mock.patch("src.extract.extract.retrieve_data_from_table") as mock_retrieve_data_from_table:
+    with mock.patch(
+        "src.extract.extract.retrieve_data_from_table"
+    ) as mock_retrieve_data_from_table:
         with mock.patch("src.extract.extract.pg8000.connect") as mock_conn:
             result = retrieve_data_from_totesys(
                 last_ingested_timestamp=test_li_timestamp,
-                current_timestamp = test_current_timestamp,
+                current_timestamp=test_current_timestamp,
                 conn=mock_conn,
             )
             calls = [
-                call("counterparty", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("currency", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("address", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("department", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("design", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("staff", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("sales_order", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("payment", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("payment_type", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("purchase_order", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01"),
-                call("transaction", "test_current_timestamp", mock_conn, last_ingested_timestamp="2200-01-01")
+                call(
+                    "counterparty",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "currency",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "address",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "department",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "design",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "staff",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "sales_order",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "payment",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "payment_type",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "purchase_order",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
+                call(
+                    "transaction",
+                    "test_current_timestamp",
+                    mock_conn,
+                    last_ingested_timestamp="2200-01-01",
+                ),
             ]
             mock_retrieve_data_from_table.assert_has_calls(calls)
 
 
 @pytest.mark.describe("retrieve_data_from_totesys()")
 @pytest.mark.it("should return same timestamp for each dict")
-def test_retrieve_from_totesys_has_correct_timestamp_on_each_dict(sm, mock_db_credentials, ssm, parameter):
+def test_retrieve_from_totesys_has_correct_timestamp_on_each_dict(
+    sm, mock_db_credentials, ssm, parameter
+):
     """retrieve_data_from_totesys should return
     a list of dicts, each one should have the same timestamp"""
     test_current_timestamp = "test_timestamp"
-    with mock.patch("src.extract.extract.retrieve_data_from_table", return_value = {"timestamp": test_current_timestamp}):
+    with mock.patch(
+        "src.extract.extract.retrieve_data_from_table",
+        return_value={"timestamp": test_current_timestamp},
+    ):
         with mock.patch("src.extract.extract.pg8000.connect"):
             result = retrieve_data_from_totesys(
-            current_timestamp=test_current_timestamp)
+                current_timestamp=test_current_timestamp
+            )
             for i in result:
                 assert i["timestamp"] == "test_timestamp"
 
@@ -287,7 +355,7 @@ def test_programming_error_table():
             table_name="table_name",
             current_timestamp="current_timestamp",
             last_ingested_timestamp=last_ingested_timestamp,
-            conn=mock_conn
+            conn=mock_conn,
         )
 
 

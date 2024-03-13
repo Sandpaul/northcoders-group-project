@@ -27,14 +27,15 @@ def transform_design(design_data):
     design_data_copy["design"]["last_updated_date"] = "1970-01-01"
     design_data_copy["design"]["last_updated_time"] = "00:00"
 
-    design_data_copy["design"]['last_updated_date'] = pd.to_datetime(
-        design_data_copy["design"]['last_updated_date'], format="%Y-%m-%d").dt.date  # noqa
-    design_data_copy["design"]['last_updated_time'] = pd.to_datetime(
-        design_data_copy["design"]['last_updated_time'], format="%H:%M").dt.time  # noqa
+    design_data_copy["design"]["last_updated_date"] = pd.to_datetime(
+        design_data_copy["design"]["last_updated_date"], format="%Y-%m-%d"
+    ).dt.date  # noqa
+    design_data_copy["design"]["last_updated_time"] = pd.to_datetime(
+        design_data_copy["design"]["last_updated_time"], format="%H:%M"
+    ).dt.time  # noqa
 
     design_data_copy["design"].insert(
-        0, 'design_record_id', range(
-            1, len(
-                design_data_copy["design"]) + 1))
+        0, "design_record_id", range(1, len(design_data_copy["design"]) + 1)
+    )
 
     return design_data_copy

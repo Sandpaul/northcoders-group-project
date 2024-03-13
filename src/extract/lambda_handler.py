@@ -3,14 +3,16 @@ for the extraction lambda.
 """
 
 import logging
-from src.extract.extract import (retrieve_data_from_totesys,
-                                 create_current_timestamp,
-                                 update_timestamp,
-                                 get_timestamp)
+from src.extract.extract import (
+    retrieve_data_from_totesys,
+    create_current_timestamp,
+    update_timestamp,
+    get_timestamp,
+)
 from src.extract.sql_to_list_of_dicts import sql_to_list_of_dicts
 from src.extract.json_file_maker import json_file_maker
 
-logger = logging.getLogger('MyLogger')
+logger = logging.getLogger("MyLogger")
 logger.setLevel(logging.INFO)
 
 
@@ -32,18 +34,21 @@ def lambda_handler(event, context):
         current_timestamp = create_current_timestamp()
         last_ingested_timestamp = get_timestamp("last_ingested_timestamp")
 
-        data = retrieve_data_from_totesys(current_timestamp=current_timestamp, last_ingested_timestamp=last_ingested_timestamp)  # noqa
-        logger.info(f'SQL Data: {data}')
+        data = retrieve_data_from_totesys(
+            current_timestamp=current_timestamp,
+            last_ingested_timestamp=last_ingested_timestamp,
+        )  # noqa
+        logger.info(f"SQL Data: {data}")
         for x in data:
             formatted_data = sql_to_list_of_dicts(x)
-            logger.info(f'Table Data: {x}')
+            logger.info(f"Table Data: {x}")
             json_file_maker(formatted_data)
-            logger.info('Table data converted to JSON')
+            logger.info("Table data converted to JSON")
 
-        update_timestamp('last_ingested_timestamp', current_timestamp)
+        update_timestamp("last_ingested_timestamp", current_timestamp)
 
     except KeyError as k:
-        logger.error(f'Error in extraction functions {k}')
+        logger.error(f"Error in extraction functions {k}")
     except Exception as e:
         logger.error(e)
         raise RuntimeError

@@ -10,7 +10,7 @@ import pandas as pd
 import boto3
 from sqlalchemy import create_engine
 
-logger = logging.getLogger('MyLogger')
+logger = logging.getLogger("MyLogger")
 logger.setLevel(logging.INFO)
 
 
@@ -26,14 +26,14 @@ def transform_parquet_to_dataframe(formatted_file_name):
             List containing the table name and the pandas DataFrame.
     """
 
-    s3 = boto3.client('s3')
+    s3 = boto3.client("s3")
     response = s3.get_object(
-        Bucket='totesys-etl-processed-data-bucket-teamness-120224',
-        Key=formatted_file_name
+        Bucket="totesys-etl-processed-data-bucket-teamness-120224",
+        Key=formatted_file_name,
     )
 
-    table_name = formatted_file_name.split('/')[0]
-    content = response['Body'].read()
+    table_name = formatted_file_name.split("/")[0]
+    content = response["Body"].read()
     content_in_bytes = io.BytesIO(content)
     df = pd.read_parquet(content_in_bytes)
     return [table_name, df]
@@ -51,26 +51,32 @@ def load_dataframe_to_database(file_path):
             Message to say that data has been inserted into the database.
 
     """
-    
+
     formatted_file_name = file_path.replace("%3A", ":")
     df_and_table_name = transform_parquet_to_dataframe(formatted_file_name)
     df = df_and_table_name[1]
     table_name = df_and_table_name[0]
 
-    if table_name == 'payment' or table_name == 'purchase_order' or table_name == 'sales_order':  # noqa
-        table_name = f'fact_{table_name}'
-    elif table_name == 'address':
-        table_name = 'dim_location'
+    if (
+        table_name == "payment"
+        or table_name == "purchase_order"
+        or table_name == "sales_order"
+    ):  # noqa
+        table_name = f"fact_{table_name}"
+    elif table_name == "address":
+        table_name = "dim_location"
     else:
-        table_name = f'dim_{table_name}'
-    
+        table_name = f"dim_{table_name}"
+
     sm = boto3.client("secretsmanager")
-    
+
     dw_secret = sm.get_secret_value(SecretId="dw_credentials")
     dw_credentials = dw_secret["SecretString"]
     dw_dict = json.loads(dw_credentials)
 
-    engine = create_engine(f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}')  # noqa
+    engine = create_engine(
+        f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}'
+    )  # noqa
 
     with engine.connect() as connection:
 
@@ -117,12 +123,11 @@ def lambda_handler(event, context):
 
     """
     try:
-        file_path = grab_file_name(event['Records'])
-        logger.info(
-            f'Parquet file to be inserted into data warehouse: {file_path}')
+        file_path = grab_file_name(event["Records"])
+        logger.info(f"Parquet file to be inserted into data warehouse: {file_path}")
 
         load_dataframe_to_database(file_path)
-        logger.info('Parquet file has been inserted into Data Warehouse!')
+        logger.info("Parquet file has been inserted into Data Warehouse!")
 
     except KeyError as k:
         logger.error(k)
@@ -133,4 +138,4 @@ def lambda_handler(event, context):
 
 def grab_file_name(records):
     """Extracts bucket and object references from Records field of event."""
-    return records[0]['s3']['object']['key']
+    return records[0]["s3"]["object"]["key"]

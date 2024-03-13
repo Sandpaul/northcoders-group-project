@@ -64,11 +64,11 @@ def connect_to_totesys():
     """
 
     sm = boto3.client("secretsmanager")
-    
+
     db_secret = sm.get_secret_value(SecretId="db_credentials")
     db_credentials = db_secret["SecretString"]
     db_dict = json.loads(db_credentials)
-    
+
     conn = pg8000.connect(**db_dict)
     logger.info("Connected to totesys")
     return conn
@@ -100,7 +100,7 @@ def retrieve_data_from_table(
             "table_name": table_name,
             "table_columns": column_names,
             "table_rows": rows,
-        } """
+        }"""
     try:
 
         if last_ingested_timestamp == "None":
@@ -127,14 +127,15 @@ def retrieve_data_from_table(
         else:
             return None
 
-
     except KeyError as ke_err:
         logger.error(f"KeyError Error occurred: {ke_err}")
         raise KeyError(f"KeyError occurred: {ke_err}") from ke_err
 
     except pg8000.ProgrammingError as pg_err:
         logger.error(f"Programming Error occurred: {pg_err}")
-        raise pg8000.ProgrammingError(f"Programming Error occurred:{pg_err}") from pg_err  # noqa
+        raise pg8000.ProgrammingError(
+            f"Programming Error occurred:{pg_err}"
+        ) from pg_err  # noqa
 
     except Exception as e:
         logger.error(f"Unexpected Error occurred: {e}")
@@ -158,7 +159,7 @@ def retrieve_data_from_totesys(
         data_update (list of dicts): list of dicts representing
         data extracted from totesys db.
     """
-    
+
     if kwargs.get("conn", None) is None:
         conn = connect_to_totesys()
     else:
@@ -168,7 +169,7 @@ def retrieve_data_from_totesys(
         last_ingested_timestamp = get_timestamp("last_ingested_timestamp")
     else:
         last_ingested_timestamp = kwargs["last_ingested_timestamp"]
-    
+
     if kwargs.get("current_timestamp", None) is None:
         current_timestamp = create_current_timestamp()
     else:
@@ -190,8 +191,10 @@ def retrieve_data_from_totesys(
     try:
         data_update = [
             retrieve_data_from_table(
-                table, current_timestamp, conn,
-                last_ingested_timestamp=last_ingested_timestamp
+                table,
+                current_timestamp,
+                conn,
+                last_ingested_timestamp=last_ingested_timestamp,
             )
             for table in table_names
         ]

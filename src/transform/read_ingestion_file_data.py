@@ -25,14 +25,13 @@ def read_ingestion_file_data(file_path):
                 }
 
     """
-    s3 = boto3.client('s3')
+    s3 = boto3.client("s3")
 
     response = s3.get_object(
-        Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-        Key=file_path
+        Bucket="totesys-etl-ingestion-bucket-teamness-120224", Key=file_path
     )
 
-    file_data = response['Body'].read().decode('utf-8')
+    file_data = response["Body"].read().decode("utf-8")
 
     parsed_data = json.loads(file_data)
 

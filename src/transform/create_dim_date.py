@@ -14,7 +14,9 @@ def create_dim_date(start_date, end_date):
         dim_date_df: Data frame.
     """
 
-    df_date = pd.DataFrame({"date_id": pd.date_range(start=f'{start_date}', end=f'{end_date}', freq='D')})  # noqa
+    df_date = pd.DataFrame(
+        {"date_id": pd.date_range(start=f"{start_date}", end=f"{end_date}", freq="D")}
+    )  # noqa
 
     df_date["year"] = df_date.date_id.dt.year
     df_date["month"] = df_date.date_id.dt.month

@@ -22,24 +22,35 @@ def transform_payment_type(payment_type_data):
         row.pop("created_at")
         row.pop("last_updated")
 
-    payment_type_data_copy["payment_type"] = pd.DataFrame.from_records(
-        row_data)
+    payment_type_data_copy["payment_type"] = pd.DataFrame.from_records(row_data)
 
     payment_type_data_copy["payment_type"]["last_updated_date"] = "1970-01-01"
     payment_type_data_copy["payment_type"]["last_updated_time"] = "00:00"
 
-    payment_type_data_copy["payment_type"]['last_updated_date'] = pd.to_datetime(  # noqa
-        payment_type_data_copy["payment_type"]['last_updated_date'], format="%Y-%m-%d").dt.date  # noqa
-    payment_type_data_copy["payment_type"]['last_updated_time'] = pd.to_datetime(  # noqa
-        payment_type_data_copy["payment_type"]['last_updated_time'], format="%H:%M").dt.time  # noqa
+    payment_type_data_copy["payment_type"]["last_updated_date"] = (
+        pd.to_datetime(  # noqa
+            payment_type_data_copy["payment_type"]["last_updated_date"],
+            format="%Y-%m-%d",
+        ).dt.date
+    )  # noqa
+    payment_type_data_copy["payment_type"]["last_updated_time"] = (
+        pd.to_datetime(  # noqa
+            payment_type_data_copy["payment_type"]["last_updated_time"], format="%H:%M"
+        ).dt.time
+    )  # noqa
 
     payment_type_data_copy["payment_type"].insert(
-        0, 'payment_record_id', range(
-            1, len(
-                payment_type_data_copy["payment_type"]) + 1))
-    
-    payment_type_data_copy["payment_type"].rename(columns={
-        "payment_record_id": 'payment_type_record_id',
-        'payment_type_id': 'payment_record_id'}, inplace=True)
+        0,
+        "payment_record_id",
+        range(1, len(payment_type_data_copy["payment_type"]) + 1),
+    )
+
+    payment_type_data_copy["payment_type"].rename(
+        columns={
+            "payment_record_id": "payment_type_record_id",
+            "payment_type_id": "payment_record_id",
+        },
+        inplace=True,
+    )
 
     return payment_type_data_copy

@@ -31,14 +31,17 @@ def transform_transaction(transaction_data):
     transaction_data_copy["transaction"]["last_updated_date"] = "1970-01-01"
     transaction_data_copy["transaction"]["last_updated_time"] = "00:00"
 
-    transaction_data_copy["transaction"]['last_updated_date'] = pd.to_datetime(
-        transaction_data_copy["transaction"]['last_updated_date'], format="%Y-%m-%d").dt.date  # noqa
-    transaction_data_copy["transaction"]['last_updated_time'] = pd.to_datetime(
-        transaction_data_copy["transaction"]['last_updated_time'], format="%H:%M").dt.time  # noqa
+    transaction_data_copy["transaction"]["last_updated_date"] = pd.to_datetime(
+        transaction_data_copy["transaction"]["last_updated_date"], format="%Y-%m-%d"
+    ).dt.date  # noqa
+    transaction_data_copy["transaction"]["last_updated_time"] = pd.to_datetime(
+        transaction_data_copy["transaction"]["last_updated_time"], format="%H:%M"
+    ).dt.time  # noqa
 
     transaction_data_copy["transaction"].insert(
-        0, 'transaction_record_id', range(
-            1, len(
-                transaction_data_copy["transaction"]) + 1))
+        0,
+        "transaction_record_id",
+        range(1, len(transaction_data_copy["transaction"]) + 1),
+    )
 
     return transaction_data_copy

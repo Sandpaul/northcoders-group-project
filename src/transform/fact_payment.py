@@ -33,22 +33,30 @@ def transform_payment(payment_data):
 
     payment_data_copy["payment"] = pd.DataFrame.from_records(row_data)
 
-    payment_data_copy["payment"].rename(columns={
-        "transaction_id": 'transaction_record_id',
-        'counterparty_id': 'counterparty_record_id',
-        "currency_id": "currency_record_id",
-        "payment_type_id": "payment_type_record_id",
-    }, inplace=True)
-    
-    payment_data_copy["payment"]['last_updated_date'] = pd.to_datetime(
-        payment_data_copy["payment"]['last_updated_date'], format="%Y-%m-%d").dt.date  # noqa
-    payment_data_copy["payment"]['last_updated_time'] = pd.to_datetime(
-        payment_data_copy["payment"]['last_updated_time'], format='mixed').dt.time  # noqa
-    payment_data_copy["payment"]['created_date'] = pd.to_datetime(
-        payment_data_copy["payment"]['created_date'], format="%Y-%m-%d").dt.date  # noqa
-    payment_data_copy["payment"]['created_time'] = pd.to_datetime(
-        payment_data_copy["payment"]['created_time'], format='mixed').dt.time  # noqa
-    payment_data_copy["payment"]['payment_date'] = pd.to_datetime(
-        payment_data_copy["payment"]['payment_date'], format="%Y-%m-%d").dt.date  # noqa
+    payment_data_copy["payment"].rename(
+        columns={
+            "transaction_id": "transaction_record_id",
+            "counterparty_id": "counterparty_record_id",
+            "currency_id": "currency_record_id",
+            "payment_type_id": "payment_type_record_id",
+        },
+        inplace=True,
+    )
+
+    payment_data_copy["payment"]["last_updated_date"] = pd.to_datetime(
+        payment_data_copy["payment"]["last_updated_date"], format="%Y-%m-%d"
+    ).dt.date  # noqa
+    payment_data_copy["payment"]["last_updated_time"] = pd.to_datetime(
+        payment_data_copy["payment"]["last_updated_time"], format="mixed"
+    ).dt.time  # noqa
+    payment_data_copy["payment"]["created_date"] = pd.to_datetime(
+        payment_data_copy["payment"]["created_date"], format="%Y-%m-%d"
+    ).dt.date  # noqa
+    payment_data_copy["payment"]["created_time"] = pd.to_datetime(
+        payment_data_copy["payment"]["created_time"], format="mixed"
+    ).dt.time  # noqa
+    payment_data_copy["payment"]["payment_date"] = pd.to_datetime(
+        payment_data_copy["payment"]["payment_date"], format="%Y-%m-%d"
+    ).dt.date  # noqa
 
     return payment_data_copy

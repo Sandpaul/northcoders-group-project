@@ -26,10 +26,10 @@ def sql_to_list_of_dicts(sql_data):
     - Value error: If column names and sql_data do not match in terms of
     amount of columns.
     """
-    timestamp = sql_data.get('timestamp')
-    tablename = sql_data.get('table_name')
-    column_names = sql_data.get('table_columns', [])
-    rows = sql_data.get('table_rows')
+    timestamp = sql_data.get("timestamp")
+    tablename = sql_data.get("table_name")
+    column_names = sql_data.get("table_columns", [])
+    rows = sql_data.get("table_rows")
 
     if not timestamp:
         raise ValueError("Missing timestamp!")
@@ -40,9 +40,10 @@ def sql_to_list_of_dicts(sql_data):
     if not column_names:
         raise ValueError("Missing column names!")
 
-    list_of_dicts = [{column_names[i]: row[i]
-                      for i in range(len(column_names))} for row in rows]
+    list_of_dicts = [
+        {column_names[i]: row[i] for i in range(len(column_names))} for row in rows
+    ]
 
-    final_dict = {'timestamp': timestamp, tablename: list_of_dicts}
+    final_dict = {"timestamp": timestamp, tablename: list_of_dicts}
 
     return final_dict
