@@ -48,6 +48,22 @@ def bucket(s3):
     )
 
 
+@pytest.fixture(scope="function")
+def sm(aws_credentials):
+    """Mock secretsmanager client"""
+    with mock_aws():
+        yield boto3.client("secretsmanager", region_name="eu-west-2")
+
+
+@pytest.fixture(scope="function")
+def mock_dw_credentials(sm):
+    """Create mock dw credentials."""
+    return sm.create_secret(
+        Name="dw_credentials",
+        SecretString='{"host" : "test_host","port" : "test_port","database" : "test_database","user" : "test_user","password" : "test_password"}'
+    )
+
+
 @pytest.fixture
 def example_dataframe():
     return pd.DataFrame({
@@ -81,7 +97,7 @@ def test_function_returns_list_of_dataframe_and_tablename(bucket, s3, example_di
 @pytest.mark.it("should invoke transform_parquet_to_dataframe")
 @patch("src.load.load.transform_parquet_to_dataframe")
 @patch("src.load.load.create_engine")
-def test_load_dataframe_to_database_calls_transform_parquet_to_dataframe(transform_parquet_to_dataframe_mock, create_engine_mock, bucket, example_dict):  # noqa
+def test_load_dataframe_to_database_calls_transform_parquet_to_dataframe(transform_parquet_to_dataframe_mock, create_engine_mock, bucket, example_dict, sm, mock_dw_credentials):  # noqa
     DF_to_parquet(example_dict)
     file_path = 'table_name/2022-11-03/14:20:51.563.parquet'
     load_dataframe_to_database(file_path)
@@ -92,11 +108,13 @@ def test_load_dataframe_to_database_calls_transform_parquet_to_dataframe(transfo
 @pytest.mark.it("should connect to data warehouse")
 @patch("src.load.load.transform_parquet_to_dataframe")
 @patch("src.load.load.create_engine")
-def test_connection_to_warehouse(create_engine_mock, transform_parquet_to_dataframe_mock, bucket, example_dict):  # noqa
+def test_connection_to_warehouse(create_engine_mock, transform_parquet_to_dataframe_mock, bucket, example_dict, sm, mock_dw_credentials):  # noqa
     DF_to_parquet(example_dict)
     file_path = 'table_name/2022-11-03/14:20:51.563.parquet'
     load_dataframe_to_database(file_path)
-    create_engine_mock.assert_called_once()
+    create_engine_mock.assert_called_once_with(
+        'postgresql+pg8000://test_user:test_password@test_host:test_port/test_database'
+    )
 
 
 @pytest.mark.describe("lambda_handler()")

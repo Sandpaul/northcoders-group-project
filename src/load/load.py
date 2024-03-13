@@ -4,6 +4,7 @@ load_dataframe_to_database(), grab_file_name() and lambda_handler().
 """
 
 import io
+import json
 import logging
 import pandas as pd
 import boto3
@@ -62,8 +63,16 @@ def load_dataframe_to_database(file_path):
         table_name = 'dim_location'
     else:
         table_name = f'dim_{table_name}'
+    
+    sm = boto3.client("secretsmanager")
+    
+    dw_secret = sm.get_secret_value(SecretId="dw_credentials")
+    dw_credentials = dw_secret["SecretString"]
+    dw_dict = json.loads(dw_credentials)
+    print(dw_dict['host'])
+    
 
-    engine = create_engine('postgresql+pg8000://')  # noqa
+    engine = create_engine(f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}')  # noqa
 
     with engine.connect() as connection:
 
