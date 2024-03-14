@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import pytest
 
-from src.transform.drop_created_and_updated import drop_created_and_updated
+from src.utils.drop_created_and_updated import drop_created_and_updated
 
 
 @pytest.fixture
