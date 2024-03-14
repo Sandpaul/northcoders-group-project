@@ -1,5 +1,6 @@
+"""This module contains the test suite for `dim_currency()`."""
+
 import os
-import io
 import json
 
 import boto3
@@ -45,7 +46,7 @@ def bucket(s3):
             Bucket="totesys-etl-ingestion-bucket-teamness-120224",
             Key="currency/2024-02-22/11:35:20.078376.parquet",
         )
-        
+
 
 @pytest.fixture
 def control_df():
@@ -71,7 +72,11 @@ def bucket_name():
 
 @pytest.mark.describe("dim_currency()")
 @pytest.mark.it("should return a dataframe")
-def test_dim_currency_returns_df(s3, bucket, file_path, bucket_name):
+def test_dim_currency_returns_df(
+    bucket,
+    file_path,
+    bucket_name,
+):
     """should return a new dataframe"""
     test_data = parquet_file_reader(file_path, bucket_name)
     result = dim_currency(test_data)
@@ -80,7 +85,11 @@ def test_dim_currency_returns_df(s3, bucket, file_path, bucket_name):
 
 @pytest.mark.describe("dim_currency()")
 @pytest.mark.it("returned dataframe should contain correct keys")  # noqa
-def test_dim_currency_returns_correct_num_keys(s3, bucket, file_path, bucket_name):
+def test_dim_currency_returns_correct_num_keys(
+    bucket,
+    file_path,
+    bucket_name,
+):
     """dim_currency() should return the correct keys."""
     test_data = parquet_file_reader(file_path, bucket_name)
     result = dim_currency(test_data)
@@ -94,17 +103,26 @@ def test_dim_currency_returns_correct_num_keys(s3, bucket, file_path, bucket_nam
 
 
 @pytest.mark.describe("dim_currency()")
-@pytest.mark.it("dataframe should contain correct currency_name")  # noqa
-def test_dim_currency_returns_correct_currency_name(s3, bucket, file_path, bucket_name):
+@pytest.mark.it("dataframe should contain correct currency_name")
+def test_dim_currency_returns_correct_currency_name(
+    bucket,
+    file_path,
+    bucket_name,
+):
     """should return the correct currency_name"""
     test_data = parquet_file_reader(file_path, bucket_name)
     result = dim_currency(test_data)
     assert result.get("currency_name").get(0) == "British Pound"
-    
+
 
 @pytest.mark.describe("dim_currency()")
-@pytest.mark.it("should not mutate original dataframe")  # noqa
-def test_dim_currency_works_on_multiple_rows(s3, bucket, file_path, bucket_name, control_df):
+@pytest.mark.it("should not mutate original dataframe")
+def test_dim_currency_works_on_multiple_rows(
+    bucket,
+    file_path,
+    bucket_name,
+    control_df,
+):
     """dim_currency() should not mutate the passed dataframe."""
     test_data = parquet_file_reader(file_path, bucket_name)
     result = dim_currency(test_data)
