@@ -47,13 +47,15 @@ def parquet_file_maker(data):
     for i in data[dict_keys[1]]:
         if isinstance(i, dict) is False:
             logger.error(f"TypeError - {i} is not a dictionary")
-            raise TypeError("There is an element in the list that is not a dictionary")  # noqa
+            raise TypeError(
+                "There is an element in the list that is not a dictionary"
+            )  # noqa
 
     if "timestamp" not in dict_keys:
         logger.error("KeyError - no timestamp.")
         raise KeyError("No timestamp.")
 
-    split_timestamp = data['timestamp'].split(" ")
+    split_timestamp = data["timestamp"].split(" ")
     date = split_timestamp[0]
     time = split_timestamp[1]
     table_name = dict_keys[1]
@@ -68,6 +70,7 @@ def parquet_file_maker(data):
     s3_client.put_object(
         Body=parquet_file,
         Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-        Key=f"{table_name}/{date}/{time}.parquet")
+        Key=f"{table_name}/{date}/{time}.parquet",
+    )
 
     logger.info(f"{table_name}/{date}/{time}.parquet successfully created.")

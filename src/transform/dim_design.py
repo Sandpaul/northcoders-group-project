@@ -39,3 +39,23 @@ def transform_design(design_data):
     )
 
     return design_data_copy
+
+
+def dim_design(design_data):
+    """
+    design:
+    -------
+    design_id
+    created_at
+    last_updated
+    desgin_name
+    file_location
+    file_name
+
+    dim_design:
+    -----------
+    design_id
+    design_name
+    file_location
+    file_name
+    """

@@ -8,7 +8,7 @@ def dim_currency(currency_data):
 
     Args:
         currency_data (dataframe): A pandas dataframe representing data extracted from currency table of totesys database.
-        
+
         It will:
             - Drop the created_at and last_updated columns.
             - Use currency codes to populate a currency name column.
