@@ -75,7 +75,7 @@ def test_returns_df(bucket):
     """get_archived_table_data() should return a dataframe."""
     result = get_archived_table_data("department", "test_bucket")
     assert type(result).__name__ == "DataFrame"
-    
+
 
 @pytest.mark.describe("get_archived_table_data()")
 @pytest.mark.it("should return a dataframe with correct number of rows")
