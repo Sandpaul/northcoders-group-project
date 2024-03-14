@@ -6,7 +6,11 @@ import boto3
 from moto import mock_aws
 import pytest
 
-from src.utils.get_bucket_name import get_bucket_name, InvalidArgumentError, BucketNotFoundError
+from src.utils.get_bucket_name import (
+    get_bucket_name,
+    InvalidArgumentError,
+    BucketNotFoundError,
+)
 
 
 @pytest.fixture(scope="function")
@@ -31,11 +35,11 @@ def buckets(s3):
     """Create mock s3 buckets."""
     s3.create_bucket(
         Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"}
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
     s3.create_bucket(
         Bucket="totesys-etl-processed_data-bucket-teamness-120224",
-        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"}
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
 
 
@@ -44,7 +48,7 @@ def one_bucket(s3):
     """Create mock s3 bucket."""
     s3.create_bucket(
         Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"}
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
 
 
