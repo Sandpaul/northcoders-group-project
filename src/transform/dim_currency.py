@@ -1,6 +1,7 @@
 """This module contains the definition for transform_currency()."""
 
 import ccy
+from src.utils.drop_created_and_updated import drop_created_and_updated
 
 
 def dim_currency(currency_data):
@@ -16,10 +17,8 @@ def dim_currency(currency_data):
     Returns:
         df (dataframe): A transformed dataframe ready for insertion into dim_currency table of data warehouse.
     """
-    df = currency_data.copy(deep=True)
 
-    df.drop("created_at", axis=1, inplace=True)
-    df.drop("last_updated", axis=1, inplace=True)
+    df = drop_created_and_updated(currency_data)
 
     currency_codes = df["currency_code"].tolist()
     currency_names = [ccy.currency(c).name for c in currency_codes]
