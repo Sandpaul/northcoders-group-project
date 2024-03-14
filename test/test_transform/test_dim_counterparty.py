@@ -60,6 +60,15 @@ def counterparty_df():
 
 
 @pytest.fixture
+def control_df():
+    """Sets up a control data frame."""
+    with open("test/test_transform/test_data/test_counterparty_data.json") as f:
+        data = f.read()
+        json_data = json.loads(data)
+        df = pd.DataFrame.from_records(json_data["counterparty"])
+        return df
+
+@pytest.fixture
 def bucket(s3, address_df_1, address_df_2):
     """Create mock s3 bucket."""
     s3.create_bucket(
@@ -133,3 +142,12 @@ def test_function_joins_correctly(s3, bucket, counterparty_df):
         result.get("counterparty_legal_address_line_1").get(1) == "6102 Rogahn Skyway"
     )
     assert result.get("counterparty_legal_address_line_1").get(2) == "27 Paul Place"
+
+
+@pytest.mark.describe("dim_counterparty()")
+@pytest.mark.it("should not mutate passed data frames")
+def test_does_not_mutate_arg(s3, bucket, counterparty_df, control_df):
+    """dim_counterparty() should not mutate passed data frame."""
+    result = dim_counterparty(counterparty_df)
+    assert counterparty_df.equals(control_df) is True
+    assert result.equals(control_df) is False
