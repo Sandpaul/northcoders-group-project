@@ -1,9 +1,10 @@
 """This module contains the definition for `get_bucket_name()`."""
 
+import logging
+import re
+
 import boto3
 from pprint import pprint
-
-import re
 
 
 def get_bucket_name(bucket):
@@ -16,10 +17,17 @@ def get_bucket_name(bucket):
         bucket_name (str): a string of the name of the bucket.
     """
 
+    logger = logging.getLogger("MyLogger")
+    logger.setLevel(logging.INFO)
+    
     if bucket == "ingestion":
         pattern = "totesys-etl-ingestion-bucket-*"
     elif bucket == "processed":
         pattern = "totesys-etl-processed_data-bucket-*"
+    else:
+        raise InvalidArgumentError(
+        logging.error(f"InvalidArgumentError: {bucket}. Valid arguments are `ingestion` or `processed`.")
+    )
 
     s3 = boto3.client("s3")
 
@@ -30,4 +38,7 @@ def get_bucket_name(bucket):
     for b in bucket_names:
         if re.search(pattern, b):
             return b
-    
+
+
+class InvalidArgumentError(Exception):
+    """Catchets arguments other than `ingestion` and `processed`."""

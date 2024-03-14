@@ -6,7 +6,7 @@ import boto3
 from moto import mock_aws
 import pytest
 
-from src.utils.get_bucket_name import get_bucket_name
+from src.utils.get_bucket_name import get_bucket_name, InvalidArgumentError
 
 
 @pytest.fixture(scope="function")
@@ -53,4 +53,5 @@ def test_returns_correct_bucket_name(buckets):
 @pytest.mark.it("should raise error if passed invalid argument")
 def test_raises_error_for_invalid_arguments(buckets):
     """get_bucket_name() should return the correct bucket name based on input."""
-    result = get_bucket_name("banana")
+    with pytest.raises(InvalidArgumentError):
+        get_bucket_name("banana")
