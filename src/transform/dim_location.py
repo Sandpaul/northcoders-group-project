@@ -2,37 +2,27 @@
 
 import pandas as pd
 
+from src.utils.drop_created_and_updated import drop_created_and_updated
 
-def transform_location(location_data):
+
+def dim_location(address_data):
     """Function to transform data stored in ingestion bucket that was extracted
-    from location table in totesys.
+    from address table in totesys.
 
     Args:
-        location_data (dict): dict of data from location file from
-        ingestion bucket
+        address_data (data frame): data frame containing data extracted from totesys address table.
 
     Returns:
-        location_data_copy (dict): copy of location_data with data dict
-        replaced by dataframe
+        df (data frame): transformed data frame ready for insertion into dim_location table of data warehouse.
     """
 
-    location_data = location_data.copy()
-    location_rows = location_data["address"]
+    df = drop_created_and_updated(address_data)
 
-    location_df = pd.DataFrame.from_records(location_rows)
-    location_df.drop(columns=["created_at", "last_updated"], inplace=True)
+    df.rename(
+        columns={
+            "address_id": "location_id",
+        },
+        inplace=True,
+    )
 
-    location_df["last_updated_date"] = "1970-01-01"
-    location_df["last_updated_time"] = "00:00"
-
-    location_df["last_updated_date"] = pd.to_datetime(
-        location_df["last_updated_date"], format="%Y-%m-%d"
-    ).dt.date
-    location_df["last_updated_time"] = pd.to_datetime(
-        location_df["last_updated_time"], format="%H:%M"
-    ).dt.time
-
-    location_data["location"] = location_df
-    del location_data["address"]
-
-    return location_data
+    return df
