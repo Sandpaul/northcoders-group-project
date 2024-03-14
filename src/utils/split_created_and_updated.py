@@ -17,13 +17,12 @@ def split_created_and_updated(data_frame):
     df["created_at"] = pd.to_datetime(df["created_at"], format="%Y-%m-%d %H:%M:%S.%f")
     df["created_date"] = df["created_at"].dt.date
     df["created_time"] = df["created_at"].dt.time
+    df.drop("created_at", axis=1, inplace=True)
     
     # df["last_updated"] = pd.to_datetime(format="%Y-%m-%d %H:%M:%S.%f")
     
     
-    
 
-    # df.drop("created_at", axis=1, inplace=True)
     # df.drop("last_updated", axis=1, inplace=True)
 
     return df

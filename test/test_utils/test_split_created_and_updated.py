@@ -51,3 +51,11 @@ def test_splits_created_at_correctly(test_data_frame):
     times = result["created_time"].tolist()
     assert dates == expected_dates
     assert times == expected_times
+
+
+@pytest.mark.describe("split_created_and_updated()")
+@pytest.mark.it("deletes created_at column")
+def test_deletes_created_at(test_data_frame):
+    """split_created_and_updated() should delete the created_at column"""
+    result = split_created_and_updated(test_data_frame)
+    assert "created_at" not in result.columns
