@@ -6,7 +6,7 @@ import boto3
 from moto import mock_aws
 import pytest
 
-from src.utils.get_bucket_name import get_bucket_name, InvalidArgumentError
+from src.utils.get_bucket_name import get_bucket_name, InvalidArgumentError, BucketNotFoundError
 
 
 @pytest.fixture(scope="function")
@@ -39,6 +39,15 @@ def buckets(s3):
     )
 
 
+@pytest.fixture(scope="function")
+def one_bucket(s3):
+    """Create mock s3 bucket."""
+    s3.create_bucket(
+        Bucket="totesys-etl-ingestion-bucket-teamness-120224",
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"}
+    )
+
+
 @pytest.mark.describe("get_bucket_name()")
 @pytest.mark.it("should return correct bucket name")
 def test_returns_correct_bucket_name(buckets):
@@ -55,3 +64,11 @@ def test_raises_error_for_invalid_arguments(buckets):
     """get_bucket_name() should return the correct bucket name based on input."""
     with pytest.raises(InvalidArgumentError):
         get_bucket_name("banana")
+
+
+@pytest.mark.describe("get_bucket_name()")
+@pytest.mark.it("should raise error if bucket not found")
+def test_raises_error_when_bucket_not_found(one_bucket):
+    """get_bucket_name() should return the correct bucket name based on input."""
+    with pytest.raises(BucketNotFoundError):
+        get_bucket_name("processed")

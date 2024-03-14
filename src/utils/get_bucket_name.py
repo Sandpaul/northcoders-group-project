@@ -35,10 +35,21 @@ def get_bucket_name(bucket):
 
     bucket_names = [bucket["Name"] for bucket in response["Buckets"]]
 
+    bucket_name = ""
+    
     for b in bucket_names:
         if re.search(pattern, b):
-            return b
+            bucket_name = b
+            
+    if len(bucket_name) == 0:
+        raise BucketNotFoundError(
+            logging.error(f"BucketNotFoundError: {bucket} bucket not found.")
+        )
 
+    return bucket_name
 
 class InvalidArgumentError(Exception):
-    """Catchets arguments other than `ingestion` and `processed`."""
+    """Catches arguments other than `ingestion` and `processed`."""
+    
+class BucketNotFoundError(Exception):
+    """Catches incidents where bucket is not found."""
