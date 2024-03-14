@@ -1,86 +1,57 @@
-"""This module contains the definition for transform_counterparty()."""
+"""This module contains the definition for `dim_counterparty()`."""
 
-import json
 import pandas as pd
-import boto3
+
+from src.utils.get_archived_table_data import get_archived_table_data
+from src.utils.get_bucket_name import get_bucket_name
 
 
-def transform_counterparty(counterparty_data):
-    """Function to transform data stored in ingestion bucket that was extracted
-    from counterparty table in totesys.
+def dim_counterparty(counterparty_data):
+    """A function to transform data from counterparty table in totesys ready to be loaded into dim_counterparty table in data warehouse.
 
     Args:
-        counterparty_data (dict): dict of data from counterparty file from
-        ingestion bucket
+        counterparty_data (data frame): data frame of counterparty table data.
 
     Returns:
-        counterparty_data_copy (dict): copy of counterparty_data with data dict
-        replaced by dataframe
-
+        dim_counterparty_df (data frame): the transformed data ready to be loaded into dim_counterparty table.
     """
-    s3 = boto3.client("s3")
 
-    response = s3.list_objects(
-        Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-        Prefix="address/",
-        Delimiter="/",
-    )  # noqa
+    bucket_name = get_bucket_name("ingestion")
 
-    subfolders = [
-        common_prefix["Prefix"] for common_prefix in response.get("CommonPrefixes", [])
-    ]  # noqa
+    address_df = get_archived_table_data(table_name="address", bucket_name=bucket_name)
 
-    address_merged_df = pd.DataFrame()
+    address_df.drop(
+        columns=[
+            "created_at",
+            "last_updated",
+        ],
+        inplace=True,
+    )
 
-    files_list = []
-
-    for folder in subfolders:
-        folder_response = s3.list_objects(
-            Bucket="totesys-etl-ingestion-bucket-teamness-120224", Prefix=folder
-        )  # noqa
-        folder_objects = folder_response.get("Contents")
-
-        address_file = [item["Key"] for item in folder_objects]
-
-        files_list.append(address_file[0])
-
-    for file in files_list:
-        file_content = (
-            s3.get_object(
-                Bucket="totesys-etl-ingestion-bucket-teamness-120224", Key=file
-            )["Body"]
-            .read()
-            .decode("utf-8")
-        )  # noqa
-
-        parsed_data = json.loads(file_content)
-
-        address_data = parsed_data["address"]
-
-        file_df = pd.DataFrame.from_records(address_data)
-
-        address_merged_df = pd.concat([address_merged_df, file_df], ignore_index=True)
-
-    counterparty_data_copy = counterparty_data.copy()
-
-    counterparty_rows = counterparty_data_copy["counterparty"]
-
-    counterparty_df = pd.DataFrame.from_records(counterparty_rows)
+    counterparty_df = counterparty_data.copy(deep=True)
 
     counterparty_df = counterparty_df[
-        ["counterparty_id", "counterparty_legal_name", "legal_address_id"]
+        [
+            "counterparty_id",
+            "counterparty_legal_name",
+            "legal_address_id",
+        ]
     ]
-
-    address_merged_df.drop(columns=["created_at", "last_updated"], inplace=True)
 
     dim_counterparty_df = pd.merge(
         counterparty_df,
-        address_merged_df,
-        left_on="legal_address_id",  # noqa
+        address_df,
+        left_on="legal_address_id",
         right_on="address_id",
     )
 
-    dim_counterparty_df.drop(columns=["legal_address_id", "address_id"], inplace=True)
+    dim_counterparty_df.drop(
+        columns=[
+            "legal_address_id",
+            "address_id",
+        ],
+        inplace=True,
+    )
 
     dim_counterparty_df.rename(
         columns={
@@ -95,22 +66,4 @@ def transform_counterparty(counterparty_data):
         inplace=True,
     )
 
-    dim_counterparty_df["last_updated_date"] = "1970-01-01"
-    dim_counterparty_df["last_updated_time"] = "00:00"
-
-    dim_counterparty_df["last_updated_date"] = pd.to_datetime(
-        dim_counterparty_df["last_updated_date"], format="%Y-%m-%d"
-    ).dt.date
-    dim_counterparty_df["last_updated_time"] = pd.to_datetime(
-        dim_counterparty_df["last_updated_time"], format="%H:%M"
-    ).dt.time
-
-    counterparty_data_copy["counterparty"] = dim_counterparty_df
-
-    counterparty_data_copy["counterparty"].insert(
-        0,
-        "counterparty_record_id",
-        range(1, len(counterparty_data_copy["counterparty"]) + 1),
-    )
-
-    return counterparty_data_copy
+    return dim_counterparty_df
