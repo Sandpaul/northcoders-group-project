@@ -1,127 +1,111 @@
-"""This module contains the test suite for transform_sales_order()"""
+"""This module contains the test suite for `fact_sales_order()`."""
 
-import os
-import boto3
-from moto import mock_aws
+import datetime
+import json
+
+import pandas as pd
 import pytest
 
-from src.transform.fact_sales_order import transform_sales_order
-from src.transform.read_ingestion_file_data import read_ingestion_file_data
-
-
-@pytest.fixture(scope="function")
-def aws_credentials():
-    """Mocked AWS Credentials for moto"""
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
-
-
-@pytest.fixture(scope="function")
-def s3(aws_credentials):
-    """Create mock s3 client."""
-    with mock_aws():
-        yield boto3.client("s3", region_name="eu-west-2")
+from src.transform.fact_sales_order import fact_sales_order
 
 
 @pytest.fixture
-def bucket(s3):
-    """Create mock s3 bucket."""
-    s3.create_bucket(
-        Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
-    )
+def sales_order_df():
+    """Sets up a test data frame."""
     with open("test/test_transform/test_data/test_sales_order_data.json") as f:
-        data_to_write = f.read()
-        s3.put_object(
-            Body=data_to_write,
-            Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-            Key="2022-11-03/14:20:51.563/sales_order.json",
-        )
-    with open("test/test_transform/test_data/test_sales_order_data2.json") as f:  # noqa
-        data_to_write = f.read()
-        s3.put_object(
-            Body=data_to_write,
-            Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-            Key="2022-11-02/14:20:51.563/sales_order.json",
-        )
+        data = f.read()
+        json_data = json.loads(data)
+        df = pd.DataFrame.from_records(json_data["sales_order"])
+        return df
 
 
-@pytest.mark.describe("transform_sales_order()")
-@pytest.mark.it("should return dictionary with a dataframe")
-def test_transform_sales_order_returns_df(s3, bucket):
-    """should return a dictionary with a dataframe"""
-    file_path = "2022-11-03/14:20:51.563/sales_order.json"
-    test_data = read_ingestion_file_data(file_path)
-    result = transform_sales_order(test_data)
-    assert type(result["sales_order"]).__name__ == "DataFrame"
+@pytest.fixture
+def control_df():
+    """Sets up a control data frame."""
+    with open("test/test_transform/test_data/test_sales_order_data.json") as f:
+        data = f.read()
+        json_data = json.loads(data)
+        df = pd.DataFrame.from_records(json_data["sales_order"])
+        return df
 
 
-@pytest.mark.describe("transform_sales_order()")
+@pytest.mark.describe("fact_sales_order()")
+@pytest.mark.it("should return a dataframe")
+def test_fact_sales_order_returns_df(sales_order_df):
+    """should return a dataframe"""
+    result = fact_sales_order(sales_order_df)
+    assert type(result).__name__ == "DataFrame"
+
+
+@pytest.mark.describe("fact_sales_order()")
 @pytest.mark.it(
-    "dataframe should contain correct last_updated_date and created_time"
+    "dataframe should contain correct created_date and created_time"
 )  # noqa
-def test_transform_sales_order_returns_correct_created(s3, bucket):
-    """should return the correct last_updated_date and created_time"""
-    file_path = "2022-11-03/14:20:51.563/sales_order.json"
-    test_data = read_ingestion_file_data(file_path)
-    result = transform_sales_order(test_data)
-    assert result["sales_order"].get("last_updated_date").get(0) == "2024-02-20"
-    assert result["sales_order"].get("created_time").get(0) == "15:07:09.880000"
+def test_fact_sales_order_returns_correct_created(sales_order_df):
+    """should return the correct created_date and created_time"""
+    result = fact_sales_order(sales_order_df)
+    expected_dates = [
+        datetime.date(2024, 2, 20),
+        datetime.date(2024, 2, 19),
+    ]
+    expected_times = [
+        datetime.time(15, 7, 9, 880000),
+        datetime.time(15, 7, 9, 880000),
+    ]
+    dates = result["created_date"].tolist()
+    times = result["created_time"].tolist()
+    assert dates == expected_dates
+    assert times == expected_times
 
 
-@pytest.mark.describe("transform_sales_order()")
+@pytest.mark.describe("fact_sales_order()")
 @pytest.mark.it(
-    "dataframe should contain correct last_updated_date and last_updated_time"
+    "dataframe should contain correct last_updated_date and last_updated"
 )  # noqa
-def test_transform_sales_order_returns_correct_last_updated(s3, bucket):
-    """should return the correct last_updated_date and last_updated_time"""
-    file_path = "2022-11-03/14:20:51.563/sales_order.json"
-    test_data = read_ingestion_file_data(file_path)
-    result = transform_sales_order(test_data)
-    assert result["sales_order"].get("last_updated_date").get(0) == "2024-02-20"
-    assert result["sales_order"].get("last_updated_time").get(0) == "15:07:09.880000"
+def test_fact_sales_order_returns_correct_last_updated(sales_order_df):
+    """should return the correct last_updated_date and last_updated"""
+    result = fact_sales_order(sales_order_df)
+    expected_dates = [
+        datetime.date(2024, 2, 20),
+        datetime.date(2024, 2, 19),
+    ]
+    expected_times = [
+        datetime.time(15, 7, 9, 880000),
+        datetime.time(15, 7, 9, 880005),
+    ]
+    dates = result["last_updated_date"].tolist()
+    times = result["last_updated_time"].tolist()
+    assert dates == expected_dates
+    assert times == expected_times
 
 
-@pytest.mark.describe("transform_sales_order()")
-@pytest.mark.it(
-    "should work when passed sales order list with more than one dict"
-)  # noqa
-def test_transform_sales_order_works_on_multiple_dicts(s3, bucket):
-    """should return the correct last_updated_date and last_updated_time"""
-    file_path = "2022-11-02/14:20:51.563/sales_order.json"
-    test_data = read_ingestion_file_data(file_path)
-    result = transform_sales_order(test_data)
-    assert result["sales_order"].get("last_updated_date").get(0) == "2024-02-20"
-    assert result["sales_order"].get("last_updated_time").get(0) == "15:07:09.880000"
-    assert result["sales_order"].get("last_updated_date").get(1) == "2024-02-19"
-    assert result["sales_order"].get("last_updated_time").get(1) == "15:07:09.880005"
-
-
-@pytest.mark.describe("transform_sales_order()")
+@pytest.mark.describe("fact_sales_order()")
 @pytest.mark.it("dataframe should contain correct column names")  # noqa
-def test_dataframe_returns_correct_column_names(s3, bucket):
-    file_path = "2022-11-02/14:20:51.563/sales_order.json"
-    test_data = read_ingestion_file_data(file_path)
-    result = transform_sales_order(test_data)
-    assert set(result["sales_order"].keys()) == set(
-        [
-            "sales_order_record_id",
-            "sales_order_id",
-            "created_date",
-            "created_time",
-            "last_updated_date",
-            "last_updated_time",
-            "sales_staff_id",
-            "counterparty_records_id",
-            "units_sold",
-            "unit_price",
-            "currency_record_id",
-            "design_record_id",
-            "agreed_payment_date",
-            "agreed_delivery_date",
-            "agreed_delivery_location_id",
-        ]
-    )
+def test_dataframe_returns_correct_column_names(sales_order_df):
+    result = fact_sales_order(sales_order_df)
+    expected = [
+        "agreed_delivery_date",
+        "agreed_delivery_location_id",
+        "agreed_payment_date",
+        "counterparty_id",
+        "currency_id",
+        "design_id",
+        "sales_order_id",
+        "sales_staff_id",
+        "unit_price",
+        "units_sold",
+        "created_date",
+        "created_time",
+        "last_updated_date",
+        "last_updated_time",
+    ]
+    assert list(result.columns) == expected
+
+
+@pytest.mark.describe("fact_sales_order()")
+@pytest.mark.it("should not mutate passed data frame")
+def test_does_not_mutate_arg(sales_order_df, control_df):
+    """fact_sales_order() should not mutate the passed data frame."""
+    result = fact_sales_order(sales_order_df)
+    assert sales_order_df.equals(control_df) is True
+    assert result.equals(sales_order_df) is False
