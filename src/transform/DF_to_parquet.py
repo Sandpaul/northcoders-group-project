@@ -3,60 +3,42 @@ format files"""
 
 import logging
 import boto3
-import pandas
+import pandas as pd
 
+from src.utils.get_bucket_name import get_bucket_name
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
-
-def DF_to_parquet(
-    dict, bucket="totesys-etl-processed-data-bucket-teamness-120224"
-):  # noqa
+def df_to_parquet(df, file_name):
     """
-    This function should take a pandas DataFrame, write it to a Parquet file,
-    and then upload it to the s3 processed bucket.
-
-    ---
-    ## Args:
-    ---
-    - `dataframe`: dictionary- Has 2 keys- timestamp and table_name.
-    The value for timestamp is the time from the json file name.
-    The value for table_name is the DataFrame of that table.
-    Example:
-    {
-    'timestamp': timestamp,
-    'table_name': DataFrame
-    }
-    ---
-    ## Returns:
-    ---
-    - Should return a message to confirm that the DataFrame has been
-    successfully converted to a parquet file and then sent to the s3
-    processed bucket
+    
+    2. Set up s3 key
+    3. Set up parquet file
+    4. Send to bucket
     """
+    
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError(f"Invalid Input: {df} is not a data frame.")
+    
+    table_name = file_name.split("/")[0]
+    
+    match table_name:
+        case "address":
+            split = file_name.split("/")
+            new_file_name = f"dim_location/{split[1]}/{split[2]}"
+        case "counterparty" | "currency" | "design" | "payment_type" | "staff" | "transaction":
+            new_file_name = f"dim_{file_name}"
+        case "payment" | "purchase_order" | "sales_order":
+            new_file_name = f"fact_{file_name}"
+    
+    bucket_name = get_bucket_name("processed")
+    
     s3 = boto3.client("s3")
-    timestamp = dict["timestamp"]
-    key_names = list(dict.keys())
-    df = None
-    table_name = None
-    for key_name in key_names:
-        if key_name != "timestamp":
-            table_name = key_name
-            df = dict[f"{table_name}"]
-            break
-
-    if not isinstance(df, pandas.DataFrame):
-        raise ValueError("Invalid DataFrame provided.")
-
-    split_timestamp = timestamp.split(" ")
-
-    date = split_timestamp[0]
-
-    time = split_timestamp[1]
-
-    s3_key = f"{table_name}/{date}/{time}.parquet"
-
-    parquet_file = pandas.DataFrame.to_parquet(df)
-    s3.put_object(Bucket=bucket, Body=parquet_file, Key=s3_key)
-    logger.info(f"{table_name}/{date}/{time} successfully created.")
+    
+    parquet_file = pd.DataFrame.to_parquet(df)
+    
+    response = s3.put_object(Bucket=bucket_name, Body=parquet_file, Key=new_file_name)
+    
+    if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+        logger.info(f"{new_file_name} successfully saved to {bucket_name}")

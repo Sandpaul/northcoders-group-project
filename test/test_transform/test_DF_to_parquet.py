@@ -1,13 +1,14 @@
 """This file contains the test suite for DF_to_parquet() only."""
 
-import pandas as pd
 import os
+from pprint import pprint
+
 import boto3
-import pytest
 from moto import mock_aws
+import pandas as pd
+import pytest
 
-
-from src.transform.DF_to_parquet import DF_to_parquet
+from src.transform.df_to_parquet import df_to_parquet
 
 
 @pytest.fixture(scope="function")
@@ -35,57 +36,62 @@ def bucket(s3):
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
 
+@pytest.fixture
+def bucket_name():
+    """Mock bucket name."""
+    return "totesys-etl-processed-data-bucket-teamness-120224"
+
 
 @pytest.fixture
-def example_dataframe():
+def test_df():
     return pd.DataFrame({"column1": [1, 2, 3], "column2": ["A", "B", "C"]})
 
 
-@pytest.fixture
-def example_dict(example_dataframe):
-    return {
-        "timestamp": "2022-11-03 14:20:51.563",
-        "table_name": example_dataframe,
-    }
-
-
+pytest.mark.describe("df_to_parquet()")
+@pytest.mark.it("should save parquet file to bucket")
 @mock_aws
-def test_DF_to_parquet_saves_to_bucket(bucket, s3, example_dict):
-
-    response1 = s3.list_objects_v2(
-        Bucket="totesys-etl-processed-data-bucket-teamness-120224"
-    )
+def test_saves_file_in_bucket(s3, bucket, bucket_name, test_df):
+    """df_to_parquet() should succesfully save files in the processed data bucket."""
+    response1 = s3.list_objects_v2(Bucket=bucket_name)
+    file_name = "sales_order/2024-01-01/00.00.000000.parquet"
     assert response1["KeyCount"] == 0
-    DF_to_parquet(example_dict)
-    response2 = s3.list_objects_v2(
-        Bucket="totesys-etl-processed-data-bucket-teamness-120224"
-    )
+    df_to_parquet(test_df, file_name)
+    response2 = s3.list_objects_v2(Bucket=bucket_name)
+    file_name = "sales_order/2024-01-01/00.00.000000.parquet"
     assert response2["KeyCount"] == 1
 
 
-@mock_aws
-def test_DF_to_parquet_correct_file_name(bucket, s3, example_dict):
-    DF_to_parquet(example_dict)
-    response = s3.list_objects_v2(
-        Bucket="totesys-etl-processed-data-bucket-teamness-120224"
-    )
-    assert (
-        response["Contents"][0]["Key"] == "table_name/2022-11-03/14:20:51.563.parquet"
-    )  # noqa
+pytest.mark.describe("df_to_parquet()")
+@pytest.mark.it("should save files with the correct name")
+def test_saves_correct_file_name(s3, bucket, bucket_name, test_df):
+    """df_to_parquet() should save files with correct name."""
+    file_names = [
+        "address/2024-01-01/00.00.000000.parquet",
+        "counterparty/2024-01-01/00.00.000000.parquet",
+        "currency/2024-01-01/00.00.000000.parquet",
+        "design/2024-01-01/00.00.000000.parquet",
+        "payment_type/2024-01-01/00.00.000000.parquet",
+        "staff/2024-01-01/00.00.000000.parquet",
+        "transaction/2024-01-01/00.00.000000.parquet",
+        "payment/2024-01-01/00.00.000000.parquet",
+        "purchase_order/2024-01-01/00.00.000000.parquet",
+        "sales_order/2024-01-01/00.00.000000.parquet",
+    ]
+    for f in file_names:
+        df_to_parquet(df=test_df, file_name=f)
+    response = s3.list_objects_v2(Bucket=bucket_name)
+    files = [file["Key"] for file in response["Contents"]]
+    expected_files = [
+        "dim_counterparty/2024-01-01/00.00.000000.parquet",
+        "dim_currency/2024-01-01/00.00.000000.parquet",
+        "dim_design/2024-01-01/00.00.000000.parquet",
+        "dim_location/2024-01-01/00.00.000000.parquet",
+        "dim_payment_type/2024-01-01/00.00.000000.parquet",
+        "dim_staff/2024-01-01/00.00.000000.parquet",
+        "dim_transaction/2024-01-01/00.00.000000.parquet",
+        "fact_payment/2024-01-01/00.00.000000.parquet",
+        "fact_purchase_order/2024-01-01/00.00.000000.parquet",
+        "fact_sales_order/2024-01-01/00.00.000000.parquet",
+    ]
+    assert files == expected_files
 
-
-def test_DF_to_parquet_invalid_dataframe(bucket, s3, example_dict):
-    """DF_to_parquet() should raise a
-    ValueError if an invalid DataFrame is provided."""
-    example_dict["table_name"] = "Not a DataFrame"
-    with pytest.raises(ValueError, match="Invalid DataFrame provided."):
-        DF_to_parquet(example_dict)
-
-
-@mock_aws
-def test_DF_to_parquet_missing_timestamp(bucket, s3, example_dict):
-    """DF_to_parquet() should raise a KeyError
-    if the timestamp key is missing."""
-    del example_dict["timestamp"]
-    with pytest.raises(KeyError, match="timestamp"):
-        DF_to_parquet(example_dict)
