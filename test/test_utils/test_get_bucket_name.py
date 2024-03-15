@@ -38,7 +38,7 @@ def buckets(s3):
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
     s3.create_bucket(
-        Bucket="totesys-etl-processed_data-bucket-teamness-120224",
+        Bucket="totesys-etl-processed-data-bucket-teamness-120224",
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
 
@@ -59,7 +59,7 @@ def test_returns_correct_bucket_name(buckets):
     result1 = get_bucket_name("ingestion")
     result2 = get_bucket_name("processed")
     assert result1 == "totesys-etl-ingestion-bucket-teamness-120224"
-    assert result2 == "totesys-etl-processed_data-bucket-teamness-120224"
+    assert result2 == "totesys-etl-processed-data-bucket-teamness-120224"
 
 
 @pytest.mark.describe("get_bucket_name()")

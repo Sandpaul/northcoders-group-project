@@ -22,7 +22,7 @@ def get_bucket_name(bucket):
     if bucket == "ingestion":
         pattern = "totesys-etl-ingestion-bucket-*"
     elif bucket == "processed":
-        pattern = "totesys-etl-processed_data-bucket-*"
+        pattern = "totesys-etl-processed-data-bucket-*"
     else:
         raise InvalidArgumentError(
             logging.error(
