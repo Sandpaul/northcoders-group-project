@@ -31,6 +31,8 @@ def df_to_parquet(df, file_name):
             new_file_name = f"dim_{file_name}"
         case "payment" | "purchase_order" | "sales_order":
             new_file_name = f"fact_{file_name}"
+        case _:
+            raise ValueError(f"Invalid Input: {table_name} is not a valid input for this function")
     
     bucket_name = get_bucket_name("processed")
     

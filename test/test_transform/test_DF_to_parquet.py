@@ -47,21 +47,19 @@ def test_df():
     return pd.DataFrame({"column1": [1, 2, 3], "column2": ["A", "B", "C"]})
 
 
-pytest.mark.describe("df_to_parquet()")
+@pytest.mark.describe("df_to_parquet()")
 @pytest.mark.it("should save parquet file to bucket")
-@mock_aws
 def test_saves_file_in_bucket(s3, bucket, bucket_name, test_df):
     """df_to_parquet() should succesfully save files in the processed data bucket."""
     response1 = s3.list_objects_v2(Bucket=bucket_name)
-    file_name = "sales_order/2024-01-01/00.00.000000.parquet"
     assert response1["KeyCount"] == 0
+    file_name = "sales_order/2024-01-01/00.00.000000.parquet"
     df_to_parquet(test_df, file_name)
     response2 = s3.list_objects_v2(Bucket=bucket_name)
-    file_name = "sales_order/2024-01-01/00.00.000000.parquet"
     assert response2["KeyCount"] == 1
 
 
-pytest.mark.describe("df_to_parquet()")
+@pytest.mark.describe("df_to_parquet()")
 @pytest.mark.it("should save files with the correct name")
 def test_saves_correct_file_name(s3, bucket, bucket_name, test_df):
     """df_to_parquet() should save files with correct name."""
@@ -95,3 +93,20 @@ def test_saves_correct_file_name(s3, bucket, bucket_name, test_df):
     ]
     assert files == expected_files
 
+
+@pytest.mark.describe("df_to_parquet()")
+@pytest.mark.it("should raise ValueError when passed invalid file name")
+def test_raises_value_error_1(test_df):
+    """df_to_parquet() should raise a ValueError if passed an invalid file_name."""
+    with pytest.raises(ValueError):
+        filename = "department/2020-01-01/00:00:00.000000"
+        df_to_parquet(test_df, filename)
+
+
+@pytest.mark.describe("df_to_parquet()")
+@pytest.mark.it("should raise ValueError when passed non data frame")
+def test_raises_value_error_2():
+    """df_to_parquet() should raise a ValueError if passed an invalid file_name."""
+    with pytest.raises(ValueError):
+        filename = "address/2020-01-01/00:00:00.000000"
+        df_to_parquet({}, filename)
