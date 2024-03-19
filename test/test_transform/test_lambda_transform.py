@@ -94,18 +94,10 @@ def test_logs_correct_bucket_name(valid_event, bucket, proc_bucket, caplog):
         lambda_handler(valid_event, {})
         assert "transaction/2024-02-22/18:00:20.106733.parquet retrieved from totesys-etl-ingestion-bucket-teamness-120224" in caplog.text
 
-      
 
-
-# @mock_aws
-# def test_lambda_handler_gets_file_name(valid_event, caplog, s3, bucket, proc_bucket):  # noqa
-#     with caplog.at_level(logging.INFO):
-#         lambda_handler(valid_event, {})
-#         assert 'File name is transaction/2024-02-22/18:00:20.106733.json!' in caplog.text  # noqa
-
-
-# @mock_aws
-# def test_lambda_handler_gets_JSON_data(valid_event, caplog, s3, bucket, proc_bucket):  # noqa
-#     with caplog.at_level(logging.INFO):
-#         lambda_handler(valid_event, {}, 'totesys-etl-processed-data-bucket-teamness-120224')  # noqa
-#         assert 'JSON file taken from S3 ingestion bucket!' in caplog.text
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should log correct table name")
+def test_logs_correct_table_name(valid_event, bucket, proc_bucket, caplog):
+    with caplog.at_level(logging.INFO):
+        lambda_handler(valid_event, {})
+        assert "transaction data:" in caplog.text
