@@ -91,7 +91,13 @@ def mock_dw_credentials(sm):
 @pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should log correct file name")
 @patch("src.load.load.create_engine")
-def test_logs_correct_file_name(create_engine_mock, valid_event, bucket, caplog, mock_dw_credentials):
+def test_logs_correct_file_name(
+    create_engine_mock,
+    valid_event,
+    bucket,
+    caplog,
+    mock_dw_credentials,
+):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
         assert (
@@ -103,7 +109,13 @@ def test_logs_correct_file_name(create_engine_mock, valid_event, bucket, caplog,
 @pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should log correct bucket name")
 @patch("src.load.load.create_engine")
-def test_logs_correct_bucket_name(create_engine_mock, valid_event, bucket, caplog, mock_dw_credentials):
+def test_logs_correct_bucket_name(
+    create_engine_mock,
+    valid_event,
+    bucket,
+    caplog,
+    mock_dw_credentials,
+):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
         assert (
@@ -115,61 +127,29 @@ def test_logs_correct_bucket_name(create_engine_mock, valid_event, bucket, caplo
 @pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should log correct table name")
 @patch("src.load.load.create_engine")
-def test_logs_correct_table_name(create_engine_mock, valid_event, bucket, caplog, mock_dw_credentials):
+def test_logs_correct_table_name(
+    create_engine_mock,
+    valid_event,
+    bucket,
+    caplog,
+    mock_dw_credentials,
+):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
-        assert (
-            "dim_transaction data:"
-            in caplog.text
-        )
+        assert "dim_transaction data:" in caplog.text
 
 
-@pytest.mark.skip
-@pytest.mark.describe("load_dataframe_to_database()")
-@pytest.mark.it("should invoke transform_parquet_to_dataframe")
-@patch("src.load.load.transform_parquet_to_dataframe")
-@patch("src.load.load.create_engine")
-def test_load_dataframe_to_database_calls_transform_parquet_to_dataframe(
-    transform_parquet_to_dataframe_mock,
-    create_engine_mock,
-    bucket,
-    example_dict,
-    sm,
-    mock_dw_credentials,
-):  # noqa
-    df_to_parquet(example_dict)
-    file_path = "table_name/2022-11-03/14:20:51.563.parquet"
-    load_dataframe_to_database(file_path)
-    transform_parquet_to_dataframe_mock.assert_called_once()
-
-@pytest.mark.skip
-@pytest.mark.describe("load_dataframe_to_database()")
+@pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should connect to data warehouse")
-@patch("src.load.load.transform_parquet_to_dataframe")
 @patch("src.load.load.create_engine")
 def test_connection_to_warehouse(
     create_engine_mock,
-    transform_parquet_to_dataframe_mock,
+    valid_event,
     bucket,
-    example_dict,
     sm,
     mock_dw_credentials,
-):  # noqa
-    df_to_parquet(example_dict)
-    file_path = "table_name/2022-11-03/14:20:51.563.parquet"
-    load_dataframe_to_database(file_path)
+):
+    lambda_handler(valid_event, {})
     create_engine_mock.assert_called_once_with(
-        "postgresql+pg8000://test_user:test_password@test_host:test_port/test_database"
+        "postgresql+pg8000://test_user:test_password@test_host:0000/test_database"
     )
-
-@pytest.mark.skip
-@pytest.mark.describe("lambda_handler()")
-@pytest.mark.it("lambda handler should cause all other functions to run")
-@patch("src.load.load.grab_file_name")
-@patch("src.load.load.load_dataframe_to_database")
-def test_lambda_handler_runs_all_other_functions(
-    load_dataframe_to_database_mock, grab_file_name_mock, valid_event
-):  # noqa
-    lambda_handler(valid_event, None)
-    load_dataframe_to_database_mock.assert_called_once()
-    grab_file_name_mock.assert_called_once()

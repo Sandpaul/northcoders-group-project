@@ -38,7 +38,9 @@ def lambda_handler(event, context):
     )
 
     with engine.connect() as connection:
+
         connection.begin()
+
         try:
             df.to_sql(
                 table_name,
@@ -46,11 +48,15 @@ def lambda_handler(event, context):
                 index=False,
                 if_exists="append",
             )
+
             connection.commit()
+
         except Exception as e:
             connection.rollback()
             print(f"An error occurred: {e}")
             raise
+
         finally:
             connection.close()
+
     logger.info(f"Data loaded to {table_name}")
