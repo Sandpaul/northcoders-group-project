@@ -12,7 +12,7 @@ from src.utils.split_created_and_updated import split_created_and_updated
 @pytest.fixture
 def test_data_frame():
     """Sets up a test data frame."""
-    with open("test/test_transform/test_data/test_sales_order_data2.json") as f:
+    with open("test/test_transform/test_data/test_sales_order_data.json") as f:
         data = f.read()
         json_data = json.loads(data)
         df = pd.DataFrame.from_records(json_data["sales_order"])
@@ -22,7 +22,7 @@ def test_data_frame():
 @pytest.fixture
 def control_data_frame():
     """Sets up a control data frame."""
-    with open("test/test_transform/test_data/test_sales_order_data2.json") as f:
+    with open("test/test_transform/test_data/test_sales_order_data.json") as f:
         data = f.read()
         json_data = json.loads(data)
         df = pd.DataFrame.from_records(json_data["sales_order"])
