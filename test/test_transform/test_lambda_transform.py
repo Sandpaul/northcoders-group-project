@@ -101,3 +101,16 @@ def test_logs_correct_table_name(valid_event, bucket, proc_bucket, caplog):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
         assert "transaction data:" in caplog.text
+
+
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should save file with correct name in processed bucket")
+def test_saves_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog):
+    bucket_name = "totesys-etl-processed-data-bucket-teamness-120224"
+    assert len(s3.list_objects_v2(Bucket=bucket_name))
+    lambda_handler(valid_event, {})
+    processed_files = s3.list_objects_v2(Bucket=bucket_name)
+    file = processed_files["Contents"][0]["Key"]
+    assert file == "dim_transaction/2024-02-22/18:00:20.106733.parquet"
+
+
