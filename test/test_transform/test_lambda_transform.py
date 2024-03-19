@@ -95,7 +95,10 @@ def control_df():
 def test_logs_correct_file_name(valid_event, bucket, proc_bucket, caplog):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
-        assert "File name is transaction/2024-02-22/18:00:20.106733.parquet!" in caplog.text
+        assert (
+            "File name is transaction/2024-02-22/18:00:20.106733.parquet!"
+            in caplog.text
+        )
 
 
 @pytest.mark.describe("lambda_handler()")
@@ -103,7 +106,10 @@ def test_logs_correct_file_name(valid_event, bucket, proc_bucket, caplog):
 def test_logs_correct_bucket_name(valid_event, bucket, proc_bucket, caplog):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
-        assert "transaction/2024-02-22/18:00:20.106733.parquet retrieved from totesys-etl-ingestion-bucket-teamness-120224" in caplog.text
+        assert (
+            "transaction/2024-02-22/18:00:20.106733.parquet retrieved from totesys-etl-ingestion-bucket-teamness-120224"
+            in caplog.text
+        )
 
 
 @pytest.mark.describe("lambda_handler()")
@@ -145,5 +151,7 @@ def test_saves_data_to_proc_bucket(s3, valid_event, bucket, proc_bucket, control
 def test_logs_on_completion(valid_event, bucket, proc_bucket, caplog):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
-        assert "dim_transaction/2024-02-22/18:00:20.106733.parquet successfully saved to totesys-etl-processed-data-bucket-teamness-120224" in caplog.text
-
+        assert (
+            "dim_transaction/2024-02-22/18:00:20.106733.parquet successfully saved to totesys-etl-processed-data-bucket-teamness-120224"
+            in caplog.text
+        )

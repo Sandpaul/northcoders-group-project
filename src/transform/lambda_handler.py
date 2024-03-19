@@ -28,10 +28,9 @@ def lambda_handler(event, context):
     bucket_name = get_bucket_name("ingestion")
     df = parquet_file_reader(formatted_file_name, bucket_name)
     logger.info(f"{formatted_file_name} retrieved from {bucket_name}")
-    
+
     table_name = formatted_file_name.split("/")[0]
     logger.info(f"{table_name} data: {df}")
-
 
     match table_name:
         case "address":

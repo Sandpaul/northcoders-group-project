@@ -27,7 +27,7 @@
             "arn": "arn:aws:s3:::totesys-etl-ingestion-bucket-teamness-120224"
           },
           "object": {
-            "key": "transaction/2024-02-22/18:00:20.106733.json",
+            "key": "transaction/2024-02-22/18:00:20.106733.parquet",
             "size": 1024,
             "eTag": "0123456789abcdef0123456789abcdef",
             "sequencer": "0A1B2C3D4E5F678901"

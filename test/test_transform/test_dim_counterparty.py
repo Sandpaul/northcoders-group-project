@@ -68,6 +68,7 @@ def control_df():
         df = pd.DataFrame.from_records(json_data["counterparty"])
         return df
 
+
 @pytest.fixture
 def bucket(s3, address_df_1, address_df_2):
     """Create mock s3 bucket."""

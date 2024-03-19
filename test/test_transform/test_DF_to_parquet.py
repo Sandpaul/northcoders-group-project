@@ -36,6 +36,7 @@ def bucket(s3):
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
 
+
 @pytest.fixture
 def bucket_name():
     """Mock bucket name."""
