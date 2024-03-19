@@ -99,6 +99,19 @@ def test_logs_correct_file_name(create_engine_mock, valid_event, bucket, caplog,
             in caplog.text
         )
 
+
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should log correct bucket name")
+@patch("src.load.load.create_engine")
+def test_logs_correct_bucket_name(create_engine_mock, valid_event, bucket, caplog, mock_dw_credentials):
+    with caplog.at_level(logging.INFO):
+        lambda_handler(valid_event, {})
+        assert (
+            "dim_transaction/2024-02-22/18:00:20.106733.parquet retrieved from totesys-etl-processed-data-bucket-teamness-120224"
+            in caplog.text
+        )
+
+
 @pytest.mark.skip
 @pytest.mark.describe("load_dataframe_to_database()")
 @pytest.mark.it("should invoke transform_parquet_to_dataframe")
