@@ -12,6 +12,7 @@ import pandas as pd
 import pytest
 
 from src.transform.lambda_handler import lambda_handler
+from src.utils.drop_created_and_updated import drop_created_and_updated
 
 
 @pytest.fixture
@@ -86,7 +87,7 @@ def control_df():
         data = f.read()
         json_data = json.loads(data)
         df = pd.DataFrame.from_records(json_data["transaction"])
-        return df
+        return drop_created_and_updated(df)
 
 
 @pytest.mark.describe("lambda_handler()")
@@ -115,7 +116,7 @@ def test_logs_correct_table_name(valid_event, bucket, proc_bucket, caplog):
 
 @pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should save file with correct name in processed bucket")
-def test_saves_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog):
+def test_saves_to_proc_bucket(s3, valid_event, bucket, proc_bucket):
     bucket_name = "totesys-etl-processed-data-bucket-teamness-120224"
     assert len(s3.list_objects_v2(Bucket=bucket_name))
     lambda_handler(valid_event, {})
@@ -126,7 +127,7 @@ def test_saves_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog):
 
 @pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should save file with correct data in processed bucket")
-def test_saves_data_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog, control_df):
+def test_saves_data_to_proc_bucket(s3, valid_event, bucket, proc_bucket, control_df):
     lambda_handler(valid_event, {})
     bucket_name = "totesys-etl-processed-data-bucket-teamness-120224"
     file_name = "dim_transaction/2024-02-22/18:00:20.106733.parquet"
@@ -134,4 +135,15 @@ def test_saves_data_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog,
     file_contents = file["Body"].read()
     content_in_bytes = io.BytesIO(file_contents)
     df = pd.read_parquet(content_in_bytes)
+    print(df)
+    print(control_df)
     assert df.equals(control_df)
+
+
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should log correctly log when new file is saved")
+def test_logs_on_completion(valid_event, bucket, proc_bucket, caplog):
+    with caplog.at_level(logging.INFO):
+        lambda_handler(valid_event, {})
+        assert "dim_transaction/2024-02-22/18:00:20.106733.parquet successfully saved to totesys-etl-processed-data-bucket-teamness-120224" in caplog.text
+
