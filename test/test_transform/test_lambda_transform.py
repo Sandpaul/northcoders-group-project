@@ -1,6 +1,7 @@
 """This module contains the test suite for lambda_handler() function
 for the transformation lambda."""
 
+import io
 import json
 import logging
 import os
@@ -79,6 +80,15 @@ def proc_bucket(s3):
     )
 
 
+@pytest.fixture
+def control_df():
+    with open("test/test_transform/test_data/test_transaction_data.json") as f:
+        data = f.read()
+        json_data = json.loads(data)
+        df = pd.DataFrame.from_records(json_data["transaction"])
+        return df
+
+
 @pytest.mark.describe("lambda_handler()")
 @pytest.mark.it("should log correct file name")
 def test_logs_correct_file_name(valid_event, bucket, proc_bucket, caplog):
@@ -114,3 +124,14 @@ def test_saves_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog):
     assert file == "dim_transaction/2024-02-22/18:00:20.106733.parquet"
 
 
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should save file with correct data in processed bucket")
+def test_saves_data_to_proc_bucket(s3, valid_event, bucket, proc_bucket, caplog, control_df):
+    lambda_handler(valid_event, {})
+    bucket_name = "totesys-etl-processed-data-bucket-teamness-120224"
+    file_name = "dim_transaction/2024-02-22/18:00:20.106733.parquet"
+    file = s3.get_object(Bucket=bucket_name, Key=file_name)
+    file_contents = file["Body"].read()
+    content_in_bytes = io.BytesIO(file_contents)
+    df = pd.read_parquet(content_in_bytes)
+    assert df.equals(control_df)
