@@ -85,7 +85,16 @@ def test_logs_correct_file_name(valid_event, bucket, proc_bucket, caplog):
     with caplog.at_level(logging.INFO):
         lambda_handler(valid_event, {})
         assert "File name is transaction/2024-02-22/18:00:20.106733.parquet!" in caplog.text
-        
+
+
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should log correct bucket name")
+def test_logs_correct_bucket_name(valid_event, bucket, proc_bucket, caplog):
+    with caplog.at_level(logging.INFO):
+        lambda_handler(valid_event, {})
+        assert "transaction/2024-02-22/18:00:20.106733.parquet retrieved from totesys-etl-ingestion-bucket-teamness-120224" in caplog.text
+
+      
 
 
 # @mock_aws
