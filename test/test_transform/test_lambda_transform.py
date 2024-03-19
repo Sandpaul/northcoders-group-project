@@ -2,12 +2,15 @@
 for the transformation lambda."""
 
 import json
-import pytest
+import logging
 import os
+
 import boto3
 from moto import mock_aws
+import pandas as pd
+import pytest
 
-from src.transform.lambda_handler import grab_file_name
+from src.transform.lambda_handler import lambda_handler
 
 
 @pytest.fixture
@@ -56,11 +59,14 @@ def bucket(s3):
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
     with open("test/test_transform/test_data/test_transaction_data.json") as f:
-        json_to_write = f.read()
+        data = f.read()
+        json_data = json.loads(data)
+        df = pd.DataFrame.from_records(json_data["transaction"])
+        data_to_write = pd.DataFrame.to_parquet(df)
         s3.put_object(
-            Body=json_to_write,
+            Body=data_to_write,
             Bucket="totesys-etl-ingestion-bucket-teamness-120224",
-            Key="transaction/2024-02-22/18:00:20.106733.json",
+            Key="transaction/2024-02-22/18:00:20.106733.parquet",
         )
 
 
@@ -68,19 +74,18 @@ def bucket(s3):
 def proc_bucket(s3):
     """Create mock s3 bucket."""
     s3.create_bucket(
-        Bucket="totesys-etl-processed-bucket-teamness-120224",
+        Bucket="totesys-etl-processed-data-bucket-teamness-120224",
         CreateBucketConfiguration={"LocationConstraint": "eu-west-2"},
     )
 
 
-def test_grab_file_name(valid_event):
-    key_result = grab_file_name(valid_event["Records"])
-    assert key_result == "transaction/2024-02-22/18:00:20.106733.json"
-
-
-def test_grab_file_name_if_file_name_not_present(invalid_event):
-    with pytest.raises(KeyError):
-        grab_file_name(invalid_event["Records"])
+@pytest.mark.describe("lambda_handler()")
+@pytest.mark.it("should log correct file name")
+def test_logs_correct_file_name(valid_event, bucket, proc_bucket, caplog):
+    with caplog.at_level(logging.INFO):
+        lambda_handler(valid_event, {})
+        assert "File name is transaction/2024-02-22/18:00:20.106733.parquet!" in caplog.text
+        
 
 
 # @mock_aws
