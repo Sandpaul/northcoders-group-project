@@ -9,6 +9,7 @@ import boto3
 from sqlalchemy import create_engine
 
 from src.utils.get_bucket_name import get_bucket_name
+from src.utils.get_secret_dict import get_secret_dict
 from src.utils.parquet_file_reader import parquet_file_reader
 
 logger = logging.getLogger("MyLogger")
@@ -28,10 +29,8 @@ def lambda_handler(event, context):
     table_name = formatted_file_name.split("/")[0]
     logger.info(f"{table_name} data: {df}")
 
-    sm = boto3.client("secretsmanager")
-    dw_secret = sm.get_secret_value(SecretId="dw_credentials")
-    dw_credentials = dw_secret["SecretString"]
-    dw_dict = json.loads(dw_credentials)
+    
+    dw_dict = get_secret_dict("dw_credentials")
 
     engine = create_engine(
         f'postgresql+pg8000://{dw_dict["user"]}:{dw_dict["password"]}@{dw_dict["host"]}:{dw_dict["port"]}/{dw_dict["database"]}'

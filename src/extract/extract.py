@@ -8,6 +8,8 @@ import logging
 import boto3
 import pg8000
 
+from src.utils.get_secret_dict import get_secret_dict
+
 
 logger = logging.getLogger("MyLogger")
 logger.setLevel(logging.INFO)
@@ -63,11 +65,7 @@ def connect_to_totesys():
         class: Connection to the totesys database.
     """
 
-    sm = boto3.client("secretsmanager")
-
-    db_secret = sm.get_secret_value(SecretId="db_credentials")
-    db_credentials = db_secret["SecretString"]
-    db_dict = json.loads(db_credentials)
+    db_dict = get_secret_dict("db_credentials")
 
     conn = pg8000.connect(**db_dict)
     logger.info("Connected to totesys")
